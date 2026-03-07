@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Team Performance Dashboard</title>
+  <style>
+    body { font-family: Arial; padding: 40px; background: #f4f6f9; }
+    h2 { margin-bottom: 30px; }
+    .grid { display: grid; grid-template-columns: repeat(2, 300px); gap: 20px; }
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .label { font-size: 14px; color: gray; }
+    .value { font-size: 28px; font-weight: bold; margin-top: 5px; }
+    .positive { color: green; }
+  </style>
+</head>
+<body>
+
+<h2>🏫 Team Performance Dashboard</h2>
+
+<div class="grid">
+  <div class="card">
+    <div class="label">Total Players</div>
+    <div class="value" id="players"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">Average Score</div>
+    <div class="value" id="average"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">Best Score</div>
+    <div class="value" id="best"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">Avg Improvement %</div>
+    <div class="value positive" id="improvement"></div>
+  </div>
+</div>
+
+<script>
+async function loadTeamStats() {
+  const response = await fetch('http://localhost:3000/team-stats');
+  const data = await response.json();
+
+  document.getElementById('players').innerText = data.total_players;
+  document.getElementById('average').innerText = data.average_score;
+  document.getElementById('best').innerText = data.best_score;
+  document.getElementById('improvement').innerText = data.avg_improvement + '%';
+}
+
+loadTeamStats();
+</script>
+
+</body>
+</html>

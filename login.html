@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Sportz-Well Login</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<div class="login-container">
+
+<h1>Sportz-Well</h1>
+<p>Structured Performance Intelligence</p>
+
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+</div>
+
+<script>
+
+async function login() {
+
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  try {
+
+    const response = await fetch("http://localhost:5000/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.token) {
+
+      localStorage.setItem("token", data.token);
+
+      window.location.href = "dashboard.html";
+
+    } else {
+
+      alert("Login failed");
+
+    }
+
+  } catch (error) {
+
+    alert("Server connection failed");
+
+  }
+
+}
+
+</script>
+
+</body>
+</html>

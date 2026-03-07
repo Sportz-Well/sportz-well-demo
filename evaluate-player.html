@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Evaluate Player</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<h2>Quarterly Evaluation</h2>
+
+<div>
+    <h3>Live Summary</h3>
+    <p>Physical: <span id="physicalScore">0</span></p>
+    <p>Skill: <span id="skillScore">0</span></p>
+    <p>Mental: <span id="mentalScore">0</span></p>
+    <p>Tactical: <span id="tacticalScore">0</span></p>
+    <h3>SWPI: <span id="overallScore">0</span></h3>
+</div>
+
+<hr>
+
+<h3>Physical</h3>
+<input type="range" min="0" max="10" value="5" class="physical">
+
+<h3>Skill</h3>
+<input type="range" min="0" max="10" value="5" class="skill">
+
+<h3>Mental</h3>
+<input type="range" min="0" max="10" value="5" class="mental">
+
+<h3>Tactical</h3>
+<input type="range" min="0" max="10" value="5" class="tactical">
+
+<br><br>
+
+<button onclick="submitEvaluation()">Submit Evaluation</button>
+
+<script>
+
+function average(values) {
+    if (!values.length) return 0;
+    return values.reduce((a,b) => a + Number(b), 0) / values.length;
+}
+
+function calculateLive() {
+
+    const physical = average([...document.querySelectorAll(".physical")].map(e => e.value));
+    const skill = average([...document.querySelectorAll(".skill")].map(e => e.value));
+    const mental = average([...document.querySelectorAll(".mental")].map(e => e.value));
+    const tactical = average([...document.querySelectorAll(".tactical")].map(e => e.value));
+
+    const overall = (physical*0.3)+(skill*0.3)+(mental*0.2)+(tactical*0.2);
+
+    document.getElementById("physicalScore").innerText = physical.toFixed(2);
+    document.getElementById("skillScore").innerText = skill.toFixed(2);
+    document.getElementById("mentalScore").innerText = mental.toFixed(2);
+    document.getElementById("tacticalScore").innerText = tactical.toFixed(2);
+    document.getElementById("overallScore").innerText = overall.toFixed(2);
+}
+
+document.querySelectorAll("input[type=range]").forEach(slider => {
+    slider.addEventListener("input", calculateLive);
+});
+
+calculateLive();
+
+async function submitEvaluation() {
+
+    const evaluation_data = {
+        physical: { p1: document.querySelector(".physical").value },
+        skill: { s1: document.querySelector(".skill").value },
+        mental: { m1: document.querySelector(".mental").value },
+        tactical: { t1: document.querySelector(".tactical").value }
+    };
+
+    const playerId = "5737de3c-d56f-4722-9a62-8230ea04802c";
+
+    const response = await fetch(`http://localhost:5000/api/players/${playerId}/evaluate`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ evaluation_data })
+    });
+
+    const data = await response.json();
+    alert(data.message || data.error);
+}
+
+</script>
+
+</body>
+</html>

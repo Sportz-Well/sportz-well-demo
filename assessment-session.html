@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Quarterly Assessment</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#0c233f;
+color:white;
+}
+
+header{
+padding:20px 40px;
+background:#0c233f;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+h1{
+color:#f0c24b;
+margin:0;
+}
+
+.container{
+padding:40px;
+}
+
+.card{
+background:#1e3a5c;
+padding:20px;
+border-radius:10px;
+margin-top:20px;
+}
+
+button{
+background:#f0c24b;
+border:none;
+padding:10px 15px;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th,td{
+padding:12px;
+text-align:left;
+}
+
+input{
+width:70px;
+padding:6px;
+background:#2c4a6f;
+border:none;
+border-radius:4px;
+color:white;
+text-align:center;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<header>
+
+<div>
+
+<h1>Sportz-Well</h1>
+
+<div style="opacity:0.8">
+Structured Performance Intelligence
+</div>
+
+</div>
+
+<button onclick="logout()">Logout</button>
+
+</header>
+
+
+<div class="container">
+
+<div style="display:flex;align-items:center;gap:20px;">
+
+<button onclick="window.location.href='dashboard.html'">
+← Back to Dashboard
+</button>
+
+<h2 style="margin:0;">Quarterly Assessment Entry</h2>
+
+</div>
+
+
+<select id="quarterSelect" style="padding:6px;margin-top:15px;">
+<option value="1">Quarter 1</option>
+<option value="2">Quarter 2</option>
+<option value="3">Quarter 3</option>
+<option value="4">Quarter 4</option>
+</select>
+
+
+<div class="card">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Player</th>
+<th>Physical</th>
+<th>Skill</th>
+<th>Mental</th>
+<th>Coach</th>
+</tr>
+
+</thead>
+
+<tbody id="assessmentTable">
+
+</tbody>
+
+</table>
+
+<br>
+
+<button onclick="saveAssessment()">Save Assessment</button>
+
+</div>
+
+</div>
+
+
+<script>
+
+async function loadPlayers(){
+
+const token = localStorage.getItem("token");
+
+const res = await fetch("http://localhost:5000/api/players",{
+headers:{ Authorization:"Bearer "+token }
+});
+
+const players = await res.json();
+
+const table=document.getElementById("assessmentTable");
+
+table.innerHTML="";
+
+players.forEach(player=>{
+
+table.innerHTML+=`
+
+<tr>
+
+<td>${player.name}</td>
+
+<td><input type="number" min="0" max="100"></td>
+
+<td><input type="number" min="0" max="100"></td>
+
+<td><input type="number" min="0" max="100"></td>
+
+<td><input type="number" min="0" max="100"></td>
+
+</tr>
+
+`;
+
+});
+
+}
+
+
+function logout(){
+
+localStorage.removeItem("token");
+window.location.href="index.html";
+
+}
+
+
+loadPlayers();
+
+</script>
+
+
+</body>
+</html>

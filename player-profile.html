@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Player Profile</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#0c233f;
+color:white;
+}
+
+header{
+padding:20px 40px;
+background:#0c233f;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+h1{
+color:#f0c24b;
+margin:0;
+}
+
+.container{
+padding:40px;
+}
+
+.card{
+background:#1e3a5c;
+padding:20px;
+border-radius:10px;
+margin-top:20px;
+}
+
+button{
+background:#f0c24b;
+border:none;
+padding:10px 15px;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+canvas{
+margin-top:20px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<header>
+
+<div>
+
+<h1>Sportz-Well</h1>
+
+<div style="opacity:0.8">
+Structured Performance Intelligence
+</div>
+
+</div>
+
+<button onclick="logout()">Logout</button>
+
+</header>
+
+
+<div class="container">
+
+<button onclick="window.location.href='players.html'">
+← Back to Players
+</button>
+
+<h2 style="margin-top:20px;">Player Profile</h2>
+
+<div class="card">
+
+<h3>Player Overview</h3>
+
+<p>Age: <span id="playerAge"></span></p>
+<p>Role: <span id="playerRole"></span></p>
+
+</div>
+
+
+<div class="card">
+
+<h3>Performance Trend</h3>
+
+<canvas id="trendChart" height="120"></canvas>
+
+</div>
+
+</div>
+
+
+<script>
+
+function logout(){
+
+localStorage.removeItem("token");
+window.location.href="index.html";
+
+}
+
+
+async function loadPlayer(){
+
+const params = new URLSearchParams(window.location.search);
+const playerId = params.get("id");
+
+const token = localStorage.getItem("token");
+
+const res = await fetch(`http://localhost:5000/api/player/${playerId}`,{
+headers:{ Authorization:"Bearer "+token }
+});
+
+const data = await res.json();
+
+document.getElementById("playerAge").innerText = data.age;
+document.getElementById("playerRole").innerText = data.role;
+
+loadChart(data.trend);
+
+}
+
+
+function loadChart(trend){
+
+const ctx = document.getElementById("trendChart");
+
+const labels = trend.map(t => "Q"+t.quarter);
+const scores = trend.map(t => t.score);
+
+new Chart(ctx,{
+type:"line",
+data:{
+labels:labels,
+datasets:[{
+label:"Performance Score",
+data:scores,
+borderColor:"#4aa3ff",
+backgroundColor:"rgba(74,163,255,0.2)",
+fill:true
+}]
+},
+options:{
+scales:{
+y:{
+beginAtZero:false,
+min:50,
+max:100
+}
+}
+}
+});
+
+}
+
+loadPlayer();
+
+</script>
+
+
+</body>
+</html>

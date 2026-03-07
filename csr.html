@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSR Dashboard</title>
+    <style>
+        body {
+            font-family:Arial;
+            background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+            color:white;
+            padding:40px;
+        }
+        .card {
+            background:#1e2a38;
+            padding:20px;
+            border-radius:10px;
+            width:300px;
+        }
+        button {
+            margin-top:20px;
+            padding:8px 12px;
+            background:#00d4a5;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        }
+    </style>
+</head>
+<body>
+
+<h2>CSR Impact Dashboard</h2>
+
+<div class="card">
+    <p>Total Schools: <span id="schools">0</span></p>
+    <p>Total Assessments: <span id="assess">0</span></p>
+    <p>Avg Score: <span id="score">0</span></p>
+    <p>Avg Improvement: <span id="improve">0%</span></p>
+</div>
+
+<button onclick="logout()">Logout</button>
+
+<script>
+const token = localStorage.getItem("token");
+if (!token) window.location.href="/login";
+
+async function loadCSR(){
+
+    const response = await fetch("http://localhost:3000/csr-metrics",{
+        headers:{ Authorization:"Bearer "+token }
+    });
+
+    const data = await response.json();
+
+    document.getElementById("schools").innerText=data.total_schools;
+    document.getElementById("assess").innerText=data.total_assessments;
+    document.getElementById("score").innerText=data.avg_score?.toFixed(2)||0;
+    document.getElementById("improve").innerText=(data.avg_improvement?.toFixed(2)||0)+"%";
+}
+
+function logout(){
+    localStorage.removeItem("token");
+    window.location.href="/login";
+}
+
+loadCSR();
+</script>
+
+</body>
+</html>

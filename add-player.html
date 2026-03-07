@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Add Player</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#0c233f;
+color:white;
+}
+
+header{
+padding:20px 40px;
+background:#0c233f;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+h1{
+color:#f0c24b;
+margin:0;
+}
+
+.container{
+padding:50px;
+}
+
+.card{
+background:#1e3a5c;
+padding:30px;
+border-radius:10px;
+width:400px;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin-top:10px;
+border:none;
+border-radius:5px;
+background:#2c4a6f;
+color:white;
+}
+
+button{
+background:#f0c24b;
+border:none;
+padding:12px;
+border-radius:5px;
+cursor:pointer;
+font-weight:bold;
+margin-top:20px;
+width:100%;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<div>
+
+<h1>Sportz-Well</h1>
+
+<div style="opacity:0.8">
+Structured Performance Intelligence
+</div>
+
+</div>
+
+<button onclick="logout()">Logout</button>
+
+</header>
+
+
+<div class="container">
+
+<h2>Add Player</h2>
+
+<div class="card">
+
+<input id="name" placeholder="Player Name">
+
+<input id="age" type="number" placeholder="Age">
+
+<select id="role">
+<option>Batsman</option>
+<option>Bowler</option>
+<option>All Rounder</option>
+<option>Wicket Keeper</option>
+</select>
+
+<select id="gender">
+<option>Male</option>
+<option>Female</option>
+</select>
+
+<button onclick="addPlayer()">Add Player</button>
+
+</div>
+
+</div>
+
+
+<script>
+
+async function addPlayer(){
+
+const token = localStorage.getItem("token");
+
+const name=document.getElementById("name").value;
+const age=document.getElementById("age").value;
+const role=document.getElementById("role").value;
+const gender=document.getElementById("gender").value;
+
+const res = await fetch("http://localhost:5000/api/players",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+Authorization:"Bearer "+token
+},
+
+body:JSON.stringify({
+name,
+age,
+role,
+gender
+})
+
+});
+
+if(res.status===200){
+
+alert("Player Added");
+
+window.location.href="players.html";
+
+}else{
+
+alert("Error adding player");
+
+}
+
+}
+
+function logout(){
+
+localStorage.removeItem("token");
+
+window.location.href="index.html";
+
+}
+
+</script>
+
+</body>
+
+</html>

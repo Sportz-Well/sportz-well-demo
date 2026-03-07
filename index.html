@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Sportz-Well Login</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#0c233f;
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+color:white;
+}
+
+.login-card{
+background:#1e3a5c;
+padding:40px;
+border-radius:12px;
+width:360px;
+text-align:center;
+}
+
+h1{
+color:#f0c24b;
+margin-bottom:5px;
+}
+
+.subtitle{
+opacity:0.8;
+margin-bottom:25px;
+}
+
+input{
+width:100%;
+padding:12px;
+margin-bottom:15px;
+border-radius:6px;
+border:none;
+font-size:14px;
+}
+
+button{
+width:100%;
+padding:12px;
+background:#f0c24b;
+border:none;
+border-radius:6px;
+font-weight:bold;
+cursor:pointer;
+}
+
+button:hover{
+opacity:0.9;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="login-card">
+
+<h1>Sportz-Well</h1>
+
+<div class="subtitle">
+Performance Intelligence
+</div>
+
+<input
+type="email"
+id="email"
+placeholder="Email Address"
+/>
+
+<input
+type="password"
+id="password"
+placeholder="Password"
+/>
+
+<button onclick="login()">
+Login
+</button>
+
+</div>
+
+<script>
+
+async function login(){
+
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+
+const res=await fetch("http://localhost:5000/api/login",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+email:email,
+password:password
+})
+
+});
+
+const data=await res.json();
+
+if(data.token){
+
+localStorage.setItem("token",data.token);
+
+window.location.href="dashboard.html";
+
+}else{
+
+alert("Invalid login");
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>

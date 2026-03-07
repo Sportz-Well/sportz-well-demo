@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Assessment - Sportz-Well</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 60px auto;
+            background: rgba(255,255,255,0.05);
+            padding: 40px;
+            border-radius: 15px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+        }
+
+        .slider-group {
+            margin-bottom: 25px;
+        }
+
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        .overall-box {
+            background: rgba(0,255,195,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #00ffc3;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #00e6b0;
+        }
+
+        .back-btn {
+            margin-top: 15px;
+            background: #ff4d4d;
+        }
+
+        .success {
+            margin-top: 15px;
+            color: #00ffc3;
+            text-align: center;
+        }
+
+        .error {
+            margin-top: 15px;
+            color: #ff4d4d;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Player Performance Assessment</h2>
+
+    <select id="playerSelect">
+        <option value="">Select Player</option>
+    </select>
+
+    <input type="text" id="quarter" placeholder="Quarter (e.g. Q1-2026)" />
+
+    <div class="slider-group">
+        <label>Physical Score <span id="physicalVal">50</span></label>
+        <input type="range" id="physical" min="0" max="100" value="50" oninput="updateScore()" />
+    </div>
+
+    <div class="slider-group">
+        <label>Mental Score <span id="mentalVal">50</span></label>
+        <input type="range" id="mental" min="0" max="100" value="50" oninput="updateScore()" />
+    </div>
+
+    <div class="slider-group">
+        <label>Skill Score <span id="skillVal">50</span></label>
+        <input type="range" id="skill" min="0" max="100" value="50" oninput="updateScore()" />
+    </div>
+
+    <div class="overall-box">
+        Overall Score: <strong><span id="overallScore">50</span></strong>
+    </div>
+
+    <button onclick="saveAssessment()">Save Assessment</button>
+    <button class="back-btn" onclick="window.location.href='/dashboard.html'">Back to Dashboard</button>
+
+    <div id="message"></div>
+</div>
+
+<script>
+
+const token = localStorage.getItem("token");
+
+if (!token) {
+    window.location.href = "/login.html";
+}
+
+function updateScore() {
+    const physical = parseInt(document.getElementById("physical").value);
+    const mental = parseInt(document.getElementById("mental").value);
+    const skill = parseInt(document.getElementById("skill").value);
+
+    document.getElementById("physicalVal").innerText = physical;
+    document.getElementById("mentalVal").innerText = mental;
+    document.getElementById("skillVal").innerText = skill;
+
+    const overall = Math.round((physical + mental + skill) / 3);
+    document.getElementById("overallScore").innerText = overall;
+}
+
+async function loadPlayers() {
+    try {
+        const response = await fetch("http://localhost:3000/api/players", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        const players = await response.json();
+        const select = document.getElementById("playerSelect");
+
+        players.forEach(player => {
+            const option = document.createElement("option");
+            option.value = player.id;
+            option.textContent = player.full_name;
+            select.appendChild(option);
+        });
+
+    } catch {
+        document.getElementById("message").innerHTML =
+            "<div class='error'>Error loading players</div>";
+    }
+}
+
+async function saveAssessment() {
+
+    const player_id = document.getElementById("playerSelect").value;
+    const quarterly_cycle = document.getElementById("quarter").value;
+
+    const physical_score = parseInt(document.getElementById("physical").value);
+    const mental_score = parseInt(document.getElementById("mental").value);
+    const skill_score = parseInt(document.getElementById("skill").value);
+
+    if (!player_id || !quarterly_cycle) {
+        document.getElementById("message").innerHTML =
+            "<div class='error'>Please select player and enter quarter</div>";
+        return;
+    }
+
+    try {
+        const response = await fetch("http://localhost:3000/api/assessments", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({
+                player_id,
+                quarterly_cycle,
+                physical_score,
+                mental_score,
+                skill_score
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            document.getElementById("message").innerHTML =
+                "<div class='error'>Server error</div>";
+            return;
+        }
+
+        document.getElementById("message").innerHTML =
+            "<div class='success'>Assessment saved successfully!</div>";
+
+        setTimeout(() => {
+            window.location.href = "/dashboard.html";
+        }, 1500);
+
+    } catch {
+        document.getElementById("message").innerHTML =
+            "<div class='error'>Server error</div>";
+    }
+}
+
+loadPlayers();
+updateScore();
+
+</script>
+
+</body>
+</html>
