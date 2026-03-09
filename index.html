@@ -5,58 +5,47 @@
 
 <title>Sportz-Well Login</title>
 
+<link rel="stylesheet" href="styles.css">
+
+<script src="app.js"></script>
+
 <style>
 
 body{
 margin:0;
 font-family:Arial;
 background:#0c233f;
-height:100vh;
 display:flex;
-align-items:center;
 justify-content:center;
+align-items:center;
+height:100vh;
 color:white;
 }
 
-.login-card{
-background:#1e3a5c;
+.login-box{
+background:#1c3b63;
 padding:40px;
-border-radius:12px;
-width:360px;
+border-radius:10px;
+width:350px;
 text-align:center;
 }
 
-h1{
-color:#f0c24b;
-margin-bottom:5px;
-}
-
-.subtitle{
-opacity:0.8;
-margin-bottom:25px;
-}
-
 input{
-width:100%;
-padding:12px;
-margin-bottom:15px;
-border-radius:6px;
+width:90%;
+padding:10px;
+margin:10px 0;
 border:none;
-font-size:14px;
+border-radius:5px;
 }
 
 button{
-width:100%;
-padding:12px;
-background:#f0c24b;
+background:#f2c14e;
 border:none;
-border-radius:6px;
+padding:12px;
+width:95%;
 font-weight:bold;
 cursor:pointer;
-}
-
-button:hover{
-opacity:0.9;
+border-radius:5px;
 }
 
 </style>
@@ -65,67 +54,28 @@ opacity:0.9;
 
 <body>
 
-<div class="login-card">
+<div class="login-box">
 
-<h1>Sportz-Well</h1>
+<h2>Sportz-Well</h2>
 
-<div class="subtitle">
-Performance Intelligence
-</div>
+<p>Performance Intelligence</p>
 
-<input
-type="email"
-id="email"
-placeholder="Email Address"
-/>
+<input id="email" type="email" placeholder="Email Address">
 
-<input
-type="password"
-id="password"
-placeholder="Password"
-/>
+<input id="password" type="password" placeholder="Password">
 
-<button onclick="login()">
-Login
-</button>
+<button onclick="handleLogin()">Login</button>
 
 </div>
 
 <script>
 
-async function login(){
+function handleLogin(){
 
 const email=document.getElementById("email").value;
 const password=document.getElementById("password").value;
 
-const res=await fetch("http://localhost:5000/api/login",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-email:email,
-password:password
-})
-
-});
-
-const data=await res.json();
-
-if(data.token){
-
-localStorage.setItem("token",data.token);
-
-window.location.href="dashboard.html";
-
-}else{
-
-alert("Invalid login");
-
-}
+loginUser(email,password);
 
 }
 
