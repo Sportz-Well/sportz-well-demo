@@ -1,91 +1,155 @@
-async function loadDashboard(){
+// ===============================
+// Sportz-Well Global App Script
+// Production API Connection
+// ===============================
 
-const dashboardElement = document.getElementById("latestScore");
+// Live Backend API
+const API_BASE = "https://sportz-well-backend.onrender.com";
 
-if(!dashboardElement){
-return;
+
+// ===============================
+// LOGIN FUNCTION
+// ===============================
+async function loginUser(email, password) {
+
+    try {
+
+        const response = await fetch(`${API_BASE}/api/login`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.token) {
+
+            localStorage.setItem("token", data.token);
+
+            window.location.href = "dashboard.html";
+
+        } else {
+
+            alert("Invalid login credentials");
+
+        }
+
+    } catch (error) {
+
+        console.error("Login error:", error);
+        alert("Server error");
+
+    }
 }
 
-const token = localStorage.getItem("token");
 
-const res = await fetch("http://localhost:5000/api/dashboard",{
-headers:{
-Authorization:"Bearer " + token
-}
-});
 
-const data = await res.json();
+// ===============================
+// TOKEN HELPER
+// ===============================
+function getToken() {
 
-document.getElementById("latestScore").innerText = data.latestScore;
-document.getElementById("topImprover").innerText = data.topImprover;
-document.getElementById("atRisk").innerText = data.atRisk;
-document.getElementById("avgImprove").innerText = data.avgImprove;
-
-loadRiskChart();
-
-}
-
-function loadRiskChart(){
-
-const chartCanvas = document.getElementById("riskChart");
-
-if(!chartCanvas){
-return;
-}
-
-const ctx = chartCanvas.getContext("2d");
-
-new Chart(ctx,{
-type:"pie",
-data:{
-labels:["Low Risk","Medium Risk","High Risk"],
-datasets:[{
-data:[12,7,6],
-backgroundColor:["#3498db","#e74c3c","#f39c12"]
-}]
-}
-});
-
-}
-
-async function loadPlayers(){
-
-const tableBody = document.getElementById("playersTableBody");
-
-if(!tableBody){
-return;
-}
-
-const token = localStorage.getItem("token");
-
-const res = await fetch("http://localhost:5000/api/players",{
-headers:{
-Authorization:"Bearer " + token
-}
-});
-
-const players = await res.json();
-
-tableBody.innerHTML = "";
-
-players.forEach(player => {
-
-const row = `
-<tr>
-<td><a href="player-profile.html?id=${player.id}">${player.name}</a></td>
-<td>${player.age}</td>
-<td>${player.role}</td>
-<td>${player.latest_score}</td>
-<td>${player.improvement_pct}%</td>
-<td>${player.status}</td>
-</tr>
-`;
-
-tableBody.innerHTML += row;
-
-});
+    return localStorage.getItem("token");
 
 }
 
-loadDashboard();
-loadPlayers();
+
+
+// ===============================
+// FETCH PLAYERS
+// ===============================
+async function fetchPlayers() {
+
+    try {
+
+        const response = await fetch(`${API_BASE}/api/players`, {
+            headers: {
+                Authorization: `Bearer ${getToken()}`
+            }
+        });
+
+        const players = await response.json();
+
+        return players;
+
+    } catch (error) {
+
+        console.error("Error loading players:", error);
+        return [];
+
+    }
+
+}
+
+
+
+// ===============================
+// ADD PLAYER
+// ===============================
+async function addPlayer(playerData) {
+
+    try {
+
+        const response = await fetch(`${API_BASE}/api/players`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${getToken()}`
+            },
+            body: JSON.stringify(playerData)
+        });
+
+        const data = await response.json();
+
+        return data;
+
+    } catch (error) {
+
+        console.error("Add player error:", error);
+
+    }
+
+}
+
+
+
+// ===============================
+// FETCH SINGLE PLAYER
+// ===============================
+async function getPlayer(playerId) {
+
+    try {
+
+        const response = await fetch(`${API_BASE}/api/players/${playerId}`, {
+            headers: {
+                Authorization: `Bearer ${getToken()}`
+            }
+        });
+
+        return await response.json();
+
+    } catch (error) {
+
+        console.error("Player fetch error:", error);
+
+    }
+
+}
+
+
+
+// ===============================
+// LOGOUT
+// ===============================
+function logout() {
+
+    localStorage.removeItem("token");
+
+    window.location.href = "login.html";
+
+}
