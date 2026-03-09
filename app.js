@@ -1,20 +1,19 @@
-// ===============================
-// Sportz-Well Global App Script
-// Production API Connection
-// ===============================
+// ================================
+// Sportz-Well Frontend API Config
+// ================================
 
-// Live Backend API
-const API_BASE = "https://sportz-well-backend.onrender.com";
+const API_BASE = "https://sportz-well-backend.onrender.com/api";
 
 
-// ===============================
-// LOGIN FUNCTION
-// ===============================
+// ================================
+// LOGIN
+// ================================
+
 async function loginUser(email, password) {
 
     try {
 
-        const response = await fetch(`${API_BASE}/api/login`, {
+        const response = await fetch(`${API_BASE}/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -42,16 +41,16 @@ async function loginUser(email, password) {
     } catch (error) {
 
         console.error("Login error:", error);
-        alert("Server error");
+        alert("Server connection failed");
 
     }
 }
 
 
+// ================================
+// TOKEN
+// ================================
 
-// ===============================
-// TOKEN HELPER
-// ===============================
 function getToken() {
 
     return localStorage.getItem("token");
@@ -59,93 +58,47 @@ function getToken() {
 }
 
 
+// ================================
+// GET PLAYERS
+// ================================
 
-// ===============================
-// FETCH PLAYERS
-// ===============================
 async function fetchPlayers() {
 
-    try {
+    const response = await fetch(`${API_BASE}/players`, {
+        headers: {
+            Authorization: `Bearer ${getToken()}`
+        }
+    });
 
-        const response = await fetch(`${API_BASE}/api/players`, {
-            headers: {
-                Authorization: `Bearer ${getToken()}`
-            }
-        });
-
-        const players = await response.json();
-
-        return players;
-
-    } catch (error) {
-
-        console.error("Error loading players:", error);
-        return [];
-
-    }
+    return await response.json();
 
 }
 
 
-
-// ===============================
+// ================================
 // ADD PLAYER
-// ===============================
-async function addPlayer(playerData) {
+// ================================
 
-    try {
+async function addPlayer(player) {
 
-        const response = await fetch(`${API_BASE}/api/players`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${getToken()}`
-            },
-            body: JSON.stringify(playerData)
-        });
+    const response = await fetch(`${API_BASE}/players`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(player)
+    });
 
-        const data = await response.json();
-
-        return data;
-
-    } catch (error) {
-
-        console.error("Add player error:", error);
-
-    }
+    return await response.json();
 
 }
 
 
-
-// ===============================
-// FETCH SINGLE PLAYER
-// ===============================
-async function getPlayer(playerId) {
-
-    try {
-
-        const response = await fetch(`${API_BASE}/api/players/${playerId}`, {
-            headers: {
-                Authorization: `Bearer ${getToken()}`
-            }
-        });
-
-        return await response.json();
-
-    } catch (error) {
-
-        console.error("Player fetch error:", error);
-
-    }
-
-}
-
-
-
-// ===============================
+// ================================
 // LOGOUT
-// ===============================
+// ================================
+
 function logout() {
 
     localStorage.removeItem("token");
