@@ -5,8 +5,6 @@
 
 <title>Player Profile</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <style>
 
 body{
@@ -40,6 +38,30 @@ border-radius:10px;
 margin-top:20px;
 }
 
+.grid{
+display:grid;
+grid-template-columns:repeat(2,minmax(220px,1fr));
+gap:16px;
+margin-top:10px;
+}
+
+.kpi{
+background:#2c4a6f;
+border-radius:8px;
+padding:14px;
+}
+
+.kpi-label{
+opacity:0.8;
+font-size:13px;
+margin-bottom:6px;
+}
+
+.kpi-value{
+font-size:20px;
+font-weight:bold;
+}
+
 button{
 background:#f0c24b;
 border:none;
@@ -49,14 +71,9 @@ cursor:pointer;
 font-weight:bold;
 }
 
-canvas{
-margin-top:20px;
-}
-
 </style>
 
 </head>
-
 
 <body>
 
@@ -80,26 +97,46 @@ Structured Performance Intelligence
 <div class="container">
 
 <button onclick="window.location.href='players.html'">
-â† Back to Players
+Back to Players
 </button>
 
 <h2 style="margin-top:20px;">Player Profile</h2>
 
 <div class="card">
 
-<h3>Player Overview</h3>
+<h3 style="margin-top:0;">Player Overview</h3>
 
-<p>Age: <span id="playerAge"></span></p>
-<p>Role: <span id="playerRole"></span></p>
-
+<div class="grid">
+<div class="kpi">
+<div class="kpi-label">Player Name</div>
+<div class="kpi-value" id="playerName">--</div>
 </div>
 
+<div class="kpi">
+<div class="kpi-label">Date of Birth</div>
+<div class="kpi-value" id="playerDob">--</div>
+</div>
 
-<div class="card">
+<div class="kpi">
+<div class="kpi-label">Role</div>
+<div class="kpi-value" id="playerRole">--</div>
+</div>
 
-<h3>Performance Trend</h3>
+<div class="kpi">
+<div class="kpi-label">Gender</div>
+<div class="kpi-value" id="playerGender">--</div>
+</div>
 
-<canvas id="trendChart" height="120"></canvas>
+<div class="kpi">
+<div class="kpi-label">Latest Score</div>
+<div class="kpi-value" id="latestScore">--</div>
+</div>
+
+<div class="kpi">
+<div class="kpi-label">Improvement %</div>
+<div class="kpi-value" id="improvementPct">--</div>
+</div>
+</div>
 
 </div>
 
@@ -109,63 +146,73 @@ Structured Performance Intelligence
 <script>
 
 function logout(){
-
 localStorage.removeItem("token");
 window.location.href="index.html";
-
 }
 
+function safeText(value){
+return value === null || value === undefined || value === "" ? "--" : value;
+}
 
 async function loadPlayer(){
 
-const params = new URLSearchParams(window.location.search);
-const playerId = params.get("id");
-
+const playerId = new URLSearchParams(window.location.search).get("id");
 const token = localStorage.getItem("token");
 
+if(!token){
+window.location.href="index.html";
+return;
+}
+
+if(!playerId){
+alert("Missing player ID");
+window.location.href="players.html";
+return;
+}
+
+try{
 const res = await fetch(`https://sportz-well-backend.onrender.com/api/player/${playerId}`,{
-headers:{ Authorization:"Bearer "+token }
+headers:{ Authorization:"Bearer " + token }
 });
+
+if(!res.ok){
+alert("Unable to load player profile");
+window.location.href="players.html";
+return;
+}
 
 const data = await res.json();
 
-document.getElementById("playerAge").innerText = data.age;
-document.getElementById("playerRole").innerText = data.role;
+const player = data.player || data;
 
-loadChart(data.trend);
+const name = player.name ?? data.name;
+const dob = player.dob ?? data.dob ?? data.date_of_birth;
+const role = player.role ?? data.role;
+const gender = player.gender ?? data.gender;
 
+let latestScore = data.latest_score ?? player.latest_score;
+let improvementPct = data.improvement_pct ?? player.improvement_pct;
+
+if((latestScore === null || latestScore === undefined) && Array.isArray(data.trend) && data.trend.length > 0){
+latestScore = data.trend[data.trend.length - 1].score;
 }
 
-
-function loadChart(trend){
-
-const ctx = document.getElementById("trendChart");
-
-const labels = trend.map(t => "Q"+t.quarter);
-const scores = trend.map(t => t.score);
-
-new Chart(ctx,{
-type:"line",
-data:{
-labels:labels,
-datasets:[{
-label:"Performance Score",
-data:scores,
-borderColor:"#4aa3ff",
-backgroundColor:"rgba(74,163,255,0.2)",
-fill:true
-}]
-},
-options:{
-scales:{
-y:{
-beginAtZero:false,
-min:50,
-max:100
+if(improvementPct === null || improvementPct === undefined){
+improvementPct = 0;
 }
+
+document.getElementById("playerName").innerText = safeText(name);
+document.getElementById("playerDob").innerText = safeText(dob);
+document.getElementById("playerRole").innerText = safeText(role);
+document.getElementById("playerGender").innerText = safeText(gender);
+document.getElementById("latestScore").innerText = safeText(latestScore);
+document.getElementById("improvementPct").innerText = safeText(improvementPct) + "%";
+
+}catch(error){
+console.error("Profile load failed:", error);
+alert("Server error while loading profile");
+window.location.href="players.html";
 }
-}
-});
 
 }
 

@@ -63,6 +63,11 @@ opacity:0.8;
 a{
 color:#7fd3ff;
 text-decoration:none;
+font-weight:bold;
+}
+
+a:hover{
+text-decoration:underline;
 }
 
 </style>
@@ -167,10 +172,15 @@ players.forEach(player => {
 const latestScore = player.latest_score ?? 0;
 const improvementPct = player.improvement_pct ?? 0;
 const status = latestScore < 60 ? "At Risk" : "On Track";
+const playerName = player.name ?? "-";
+const playerId = player.id;
+const nameCell = playerId !== undefined && playerId !== null
+? `<a href="player-profile.html?id=${encodeURIComponent(playerId)}">${playerName}</a>`
+: playerName;
 
 tableBody.innerHTML += `
 <tr>
-<td>${player.name ?? "-"}</td>
+<td>${nameCell}</td>
 <td>${player.age ?? "-"}</td>
 <td>${player.role ?? "-"}</td>
 <td>${latestScore}</td>
