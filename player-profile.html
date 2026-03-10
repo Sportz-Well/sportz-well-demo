@@ -171,8 +171,10 @@ return;
 }
 
 try{
-const res = await fetch(`https://sportz-well-backend.onrender.com/api/player/${playerId}`,{
-headers:{ Authorization:"Bearer " + token }
+const res = await fetch(`https://sportz-well-backend.onrender.com/api/player/${playerId}`, {
+headers: {
+"Authorization": "Bearer " + token
+}
 });
 
 if(!res.ok){
