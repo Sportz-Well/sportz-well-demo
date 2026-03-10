@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <title>Evaluate Player</title>
@@ -73,12 +73,14 @@ async function submitEvaluation() {
         tactical: { t1: document.querySelector(".tactical").value }
     };
 
+    const token = localStorage.getItem("token");
     const playerId = "5737de3c-d56f-4722-9a62-8230ea04802c";
 
-    const response = await fetch(`http://localhost:5000/api/players/${playerId}/evaluate`, {
+    const response = await fetch(`https://sportz-well-backend.onrender.com/api/players/${playerId}/evaluate`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
         },
         body: JSON.stringify({ evaluation_data })
     });

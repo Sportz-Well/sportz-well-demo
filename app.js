@@ -1,9 +1,9 @@
-// ======================================
+﻿// ======================================
 // SPORTZ-WELL FRONTEND API CONFIG
 // ======================================
 
 // IMPORTANT: Replace with your Render backend URL
-const API_BASE = "https://sportz-well-backend.onrender.com";
+const API_BASE = "https://sportz-well-backend.onrender.com/api";
 
 // ======================================
 // TOKEN HELPER
@@ -12,15 +12,6 @@ const API_BASE = "https://sportz-well-backend.onrender.com";
 function getToken() {
   return localStorage.getItem("token");
 }
-
-// ======================================
-// TOKEN HELPER
-// ======================================
-
-function getToken() {
-  return localStorage.getItem("token");
-}
-
 
 // ======================================
 // LOGIN
@@ -54,7 +45,6 @@ async function loginUser(email, password) {
   }
 }
 
-
 // ======================================
 // GET PLAYERS
 // ======================================
@@ -68,7 +58,6 @@ async function fetchPlayers() {
 
   return await response.json();
 }
-
 
 // ======================================
 // ADD PLAYER
@@ -87,7 +76,6 @@ async function addPlayer(player) {
 
   return await response.json();
 }
-
 
 // ======================================
 // ADD ASSESSMENT

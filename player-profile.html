@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 
 <head>
@@ -80,7 +80,7 @@ Structured Performance Intelligence
 <div class="container">
 
 <button onclick="window.location.href='players.html'">
-← Back to Players
+â† Back to Players
 </button>
 
 <h2 style="margin-top:20px;">Player Profile</h2>
@@ -123,7 +123,7 @@ const playerId = params.get("id");
 
 const token = localStorage.getItem("token");
 
-const res = await fetch(`http://localhost:5000/api/player/${playerId}`,{
+const res = await fetch(`https://sportz-well-backend.onrender.com/api/player/${playerId}`,{
 headers:{ Authorization:"Bearer "+token }
 });
 
