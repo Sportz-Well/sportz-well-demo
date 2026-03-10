@@ -1,41 +1,153 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
-
 <title>Sportz-Well | Add Player</title>
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#0c233f;
+color:white;
+}
 
-<script src="app.js"></script>
+header{
+padding:20px 40px;
+background:#0c233f;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
 
+.brand h1{
+color:#f0c24b;
+margin:0;
+font-size:44px;
+}
+
+.brand p{
+margin:0;
+opacity:0.85;
+font-size:32px;
+}
+
+.logout-btn{
+background:#f0c24b;
+border:none;
+padding:10px 18px;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+font-size:20px;
+}
+
+.page-wrap{
+min-height:calc(100vh - 120px);
+display:flex;
+justify-content:center;
+align-items:center;
+padding:30px;
+}
+
+.card{
+width:100%;
+max-width:580px;
+background:#1e3a5c;
+padding:30px;
+border-radius:14px;
+box-shadow:0 10px 30px rgba(0,0,0,0.25);
+}
+
+.card h2{
+margin-top:0;
+margin-bottom:20px;
+font-size:32px;
+}
+
+label{
+display:block;
+margin:14px 0 8px;
+opacity:0.9;
+font-size:18px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+border:none;
+border-radius:8px;
+background:#2c4a6f;
+color:white;
+font-size:16px;
+box-sizing:border-box;
+}
+
+.actions{
+margin-top:24px;
+display:flex;
+gap:12px;
+}
+
+.primary-btn{
+background:#f0c24b;
+border:none;
+padding:12px 18px;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+font-size:16px;
+}
+
+.secondary-btn{
+background:transparent;
+border:1px solid #f0c24b;
+color:#f0c24b;
+padding:12px 18px;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+font-size:16px;
+}
+</style>
 </head>
-
 <body>
 
+<header>
+<div class="brand">
+<h1>Sportz-Well</h1>
+<p>Structured Performance Intelligence</p>
+</div>
+<button class="logout-btn" onclick="logout()">Logout</button>
+</header>
+
+<div class="page-wrap">
+<div class="card">
 <h2>Add Player</h2>
 
-<input id="name" placeholder="Player Name">
+<label for="name">Player Name</label>
+<input id="name" placeholder="Enter player name">
 
-<br><br>
-
+<label for="dob">Date of Birth</label>
 <input id="dob" type="date">
 
-<br><br>
-
+<label for="role">Role</label>
 <select id="role">
 <option>Batsman</option>
 <option>Bowler</option>
 <option>All Rounder</option>
 </select>
 
-<br><br>
-
+<label for="gender">Gender</label>
 <select id="gender">
 <option>Male</option>
 <option>Female</option>
 </select>
 
-<br><br>
-
-<button onclick="addPlayer()">Add Player</button>
+<div class="actions">
+<button class="primary-btn" onclick="addPlayer()">Add Player</button>
+<button class="secondary-btn" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+</div>
+</div>
+</div>
 
 <script>
 
@@ -76,6 +188,11 @@ alert("Error adding player")
 
 }
 
+}
+
+function logout(){
+localStorage.removeItem("token");
+window.location.href="index.html";
 }
 
 </script>
