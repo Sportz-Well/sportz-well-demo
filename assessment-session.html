@@ -150,7 +150,7 @@ async function loadPlayers(){
 
 const token = localStorage.getItem("token");
 
-const res = await fetch("http://localhost:5000/api/players",{
+const res = await fetch("https://sportz-well-backend.onrender.com/api/players",{
 headers:{ Authorization:"Bearer "+token }
 });
 

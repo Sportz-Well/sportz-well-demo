@@ -1,108 +1,108 @@
-// ================================
-// Sportz-Well Frontend API Config
-// ================================
+// ======================================
+// SPORTZ-WELL FRONTEND API CONFIG
+// ======================================
 
-const API_BASE = "https://sportz-well-backend.onrender.com/api";
+// IMPORTANT: Replace with your Render backend URL
+const API_BASE = "https://sportz-well-backend.onrender.com";
 
-
-// ================================
-// LOGIN
-// ================================
-
-async function loginUser(email, password) {
-
-    try {
-
-        const response = await fetch(`${API_BASE}/login`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                email: email,
-                password: password
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.token) {
-
-            localStorage.setItem("token", data.token);
-
-            window.location.href = "dashboard.html";
-
-        } else {
-
-            alert("Invalid login credentials");
-
-        }
-
-    } catch (error) {
-
-        console.error("Login error:", error);
-        alert("Server connection failed");
-
-    }
-}
-
-
-// ================================
-// TOKEN
-// ================================
+// ======================================
+// TOKEN HELPER
+// ======================================
 
 function getToken() {
+  return localStorage.getItem("token");
+}
 
-    return localStorage.getItem("token");
+// ======================================
+// TOKEN HELPER
+// ======================================
 
+function getToken() {
+  return localStorage.getItem("token");
 }
 
 
-// ================================
-// GET PLAYERS
-// ================================
+// ======================================
+// LOGIN
+// ======================================
 
-async function fetchPlayers() {
-
-    const response = await fetch(`${API_BASE}/players`, {
-        headers: {
-            Authorization: `Bearer ${getToken()}`
-        }
+async function loginUser(email, password) {
+  try {
+    const response = await fetch(`${API_BASE}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password
+      })
     });
 
-    return await response.json();
+    const data = await response.json();
 
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+      window.location.href = "dashboard.html";
+    } else {
+      alert("Invalid login credentials");
+    }
+
+  } catch (error) {
+    console.error("Login error:", error);
+    alert("Server connection failed");
+  }
 }
 
 
-// ================================
+// ======================================
+// GET PLAYERS
+// ======================================
+
+async function fetchPlayers() {
+  const response = await fetch(`${API_BASE}/players`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`
+    }
+  });
+
+  return await response.json();
+}
+
+
+// ======================================
 // ADD PLAYER
-// ================================
+// ======================================
 
 async function addPlayer(player) {
 
-    const response = await fetch(`${API_BASE}/players`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getToken()}`
-        },
-        body: JSON.stringify(player)
-    });
+  const response = await fetch(`${API_BASE}/players`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`
+    },
+    body: JSON.stringify(player)
+  });
 
-    return await response.json();
-
+  return await response.json();
 }
 
 
-// ================================
-// LOGOUT
-// ================================
+// ======================================
+// ADD ASSESSMENT
+// ======================================
 
-function logout() {
+async function addAssessment(data) {
 
-    localStorage.removeItem("token");
+  const response = await fetch(`${API_BASE}/assessments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`
+    },
+    body: JSON.stringify(data)
+  });
 
-    window.location.href = "login.html";
-
+  return await response.json();
 }
