@@ -1,12 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
-
 <head>
-
 <title>Quarterly Assessment</title>
-
 <style>
-
 body{
 margin:0;
 font-family:Arial;
@@ -59,7 +55,7 @@ text-align:left;
 }
 
 input{
-width:70px;
+width:72px;
 padding:6px;
 background:#2c4a6f;
 border:none;
@@ -68,42 +64,27 @@ color:white;
 text-align:center;
 }
 
+.small-note{
+opacity:0.75;
+font-size:12px;
+margin-top:8px;
+}
 </style>
-
 </head>
-
-
 <body>
-
 <header>
-
 <div>
-
 <h1>Sportz-Well</h1>
-
-<div style="opacity:0.8">
-Structured Performance Intelligence
+<div style="opacity:0.8">Structured Performance Intelligence</div>
 </div>
-
-</div>
-
-<button onclick="logout()">Logout</button>
-
+<button onclick="window.logout()">Logout</button>
 </header>
 
-
 <div class="container">
-
 <div style="display:flex;align-items:center;gap:20px;">
-
-<button onclick="window.location.href='dashboard.html'">
-← Back to Dashboard
-</button>
-
+<button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
 <h2 style="margin:0;">Quarterly Assessment Entry</h2>
-
 </div>
-
 
 <select id="quarterSelect" style="padding:6px;margin-top:15px;">
 <option value="1">Quarter 1</option>
@@ -112,13 +93,9 @@ Structured Performance Intelligence
 <option value="4">Quarter 4</option>
 </select>
 
-
 <div class="card">
-
 <table>
-
 <thead>
-
 <tr>
 <th>Player</th>
 <th>Physical</th>
@@ -126,77 +103,174 @@ Structured Performance Intelligence
 <th>Mental</th>
 <th>Coach</th>
 </tr>
-
 </thead>
-
-<tbody id="assessmentTable">
-
-</tbody>
-
+<tbody id="assessmentTable"></tbody>
 </table>
 
+<div class="small-note">Enter scores (0-100). Leave a row blank to skip that player.</div>
+
 <br>
-
-<button onclick="saveAssessment()">Save Assessment</button>
-
+<button id="saveAssessmentBtn" onclick="window.saveAssessment()">Save Assessment</button>
 </div>
-
 </div>
-
 
 <script>
+const API_BASE = "https://sportz-well-backend.onrender.com/api";
 
-async function loadPlayers(){
-
-const token = localStorage.getItem("token");
-
-const res = await fetch("https://sportz-well-backend.onrender.com/api/players",{
-headers:{ Authorization:"Bearer "+token }
-});
-
-const players = await res.json();
-
-const table=document.getElementById("assessmentTable");
-
-table.innerHTML="";
-
-players.forEach(player=>{
-
-table.innerHTML+=`
-
-<tr>
-
-<td>${player.name}</td>
-
-<td><input type="number" min="0" max="100"></td>
-
-<td><input type="number" min="0" max="100"></td>
-
-<td><input type="number" min="0" max="100"></td>
-
-<td><input type="number" min="0" max="100"></td>
-
-</tr>
-
-`;
-
-});
-
+function getToken() {
+return localStorage.getItem("token");
 }
 
+function parseScore(value) {
+if (value === "" || value === null || value === undefined) {
+return null;
+}
+const n = parseInt(value, 10);
+return Number.isNaN(n) ? null : n;
+}
 
-function logout(){
+function allScoresProvided(scores) {
+return scores.every(function (s) { return s !== null; });
+}
 
+function validRange(scores) {
+return scores.every(function (s) { return s >= 0 && s <= 100; });
+}
+
+function calculateOverall(physical, skill, mental, coach) {
+return Math.round((physical + skill + mental + coach) / 4);
+}
+
+window.logout = function () {
 localStorage.removeItem("token");
-window.location.href="index.html";
+window.location.href = "index.html";
+};
 
+window.loadPlayers = async function () {
+const token = getToken();
+if (!token) {
+window.location.href = "index.html";
+return;
 }
 
+try {
+const response = await fetch(API_BASE + "/players", {
+headers: {
+Authorization: "Bearer " + token
+}
+});
 
-loadPlayers();
+if (!response.ok) {
+alert("Unable to load players.");
+return;
+}
 
+const players = await response.json();
+const tableBody = document.getElementById("assessmentTable");
+tableBody.innerHTML = "";
+
+if (!Array.isArray(players) || players.length === 0) {
+tableBody.innerHTML = "<tr><td colspan='5'>No players found</td></tr>";
+return;
+}
+
+players.forEach(function (player) {
+const row = document.createElement("tr");
+row.setAttribute("data-player-id", String(player.id));
+row.innerHTML =
+"<td>" + (player.name || "-") + "</td>" +
+"<td><input type='number' min='0' max='100' class='physical-input'></td>" +
+"<td><input type='number' min='0' max='100' class='skill-input'></td>" +
+"<td><input type='number' min='0' max='100' class='mental-input'></td>" +
+"<td><input type='number' min='0' max='100' class='coach-input'></td>";
+tableBody.appendChild(row);
+});
+
+} catch (error) {
+console.error("Load players failed:", error);
+alert("Server error while loading players.");
+}
+};
+
+window.saveAssessment = async function () {
+const token = getToken();
+if (!token) {
+window.location.href = "index.html";
+return;
+}
+
+const rows = document.querySelectorAll("#assessmentTable tr[data-player-id]");
+let savedCount = 0;
+
+for (const row of rows) {
+const userId = parseInt(row.getAttribute("data-player-id"), 10);
+const physical = parseScore(row.querySelector(".physical-input").value);
+const skill = parseScore(row.querySelector(".skill-input").value);
+const mental = parseScore(row.querySelector(".mental-input").value);
+const coach = parseScore(row.querySelector(".coach-input").value);
+
+const scores = [physical, skill, mental, coach];
+
+if (scores.every(function (s) { return s === null; })) {
+continue;
+}
+
+if (!allScoresProvided(scores)) {
+alert("Please fill all 4 scores for each player row you want to save.");
+return;
+}
+
+if (!validRange(scores)) {
+alert("Scores must be between 0 and 100.");
+return;
+}
+
+const overall = calculateOverall(physical, skill, mental, coach);
+
+const payload = {
+user_id: userId,
+physical_score: physical,
+skill_score: skill,
+mental_score: mental,
+overall_score: overall,
+improvement_pct: 0
+};
+
+const response = await fetch("https://sportz-well-backend.onrender.com/api/assessments", {
+method: "POST",
+headers: {
+"Content-Type": "application/json",
+Authorization: "Bearer " + token
+},
+body: JSON.stringify(payload)
+});
+
+if (!response.ok) {
+let errorBody = {};
+try {
+errorBody = await response.json();
+} catch (e) {
+errorBody = {};
+}
+alert(errorBody.error || "Failed to save one or more assessments.");
+return;
+}
+
+savedCount++;
+}
+
+if (savedCount === 0) {
+alert("Enter scores for at least one player.");
+return;
+}
+
+alert("Assessment saved successfully");
+window.location.href = "dashboard.html";
+};
+
+document.addEventListener("DOMContentLoaded", function () {
+window.loadPlayers();
+});
 </script>
-
-
 </body>
 </html>
