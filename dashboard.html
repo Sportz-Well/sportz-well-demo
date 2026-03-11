@@ -38,6 +38,19 @@ padding:25px;
 border-radius:10px;
 }
 
+.insight-section{
+margin-top:-10px;
+margin-bottom:30px;
+}
+
+.insight-card{
+background:#1e3a5c;
+padding:18px;
+border-radius:10px;
+line-height:1.5;
+opacity:0.95;
+}
+
 .card-title{
 opacity:0.8;
 margin-bottom:10px;
@@ -127,6 +140,11 @@ U14 Squad Performance Dashboard
 
 </div>
 
+<div class="insight-section">
+<h3 style="margin:0 0 10px 0;">Coach Insight</h3>
+<div id="coachInsight" class="insight-card"></div>
+</div>
+
 <div class="buttons">
 
 <button onclick="window.location.href='players.html'">
@@ -178,6 +196,20 @@ async function loadDashboardMetrics(){
     document.getElementById("topImprover").innerText = data.top_improver !== null ? ("Player " + data.top_improver) : "--";
     document.getElementById("atRisk").innerText = data.at_risk_count ?? 0;
     document.getElementById("avgImprove").innerText = (data.avg_improvement ?? 0) + "%";
+
+    let insight = "";
+
+    if(data.at_risk_count >= 2){
+      insight = "⚠️ " + data.at_risk_count + " players are currently in the risk zone. Immediate skill reinforcement recommended.";
+    }
+    else if(data.avg_improvement > 0){
+      insight = "📈 Overall team improvement trend is positive. Continue current training intensity.";
+    }
+    else{
+      insight = "📊 Monitor player progress closely this quarter.";
+    }
+
+    document.getElementById("coachInsight").innerText = insight;
 
     const atRisk = Number(data.at_risk_count ?? 0);
     const ctx = document.getElementById("riskChart");
