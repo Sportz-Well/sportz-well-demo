@@ -154,6 +154,25 @@ function safeText(value){
 return value === null || value === undefined || value === "" ? "--" : value;
 }
 
+function formatDate(value){
+if(!value){
+return "--";
+}
+
+const datePart = String(value).split("T")[0];
+const bits = datePart.split("-");
+
+if(bits.length !== 3){
+return safeText(value);
+}
+
+const year = bits[0];
+const month = bits[1];
+const day = bits[2];
+
+return `${day}/${month}/${year}`;
+}
+
 async function loadPlayer(){
 
 const playerId = new URLSearchParams(window.location.search).get("id");
@@ -192,23 +211,23 @@ const dob = player.dob ?? data.dob ?? data.date_of_birth;
 const role = player.role ?? data.role;
 const gender = player.gender ?? data.gender;
 
-let latestScore = data.latest_score ?? player.latest_score;
-let improvementPct = data.improvement_pct ?? player.improvement_pct;
+let latestScore = player.overall_score ?? data.overall_score ?? player.latest_score ?? data.latest_score;
+let improvementPct = player.improvement_pct ?? data.improvement_pct;
 
 if((latestScore === null || latestScore === undefined) && Array.isArray(data.trend) && data.trend.length > 0){
 latestScore = data.trend[data.trend.length - 1].score;
 }
 
-if(improvementPct === null || improvementPct === undefined){
-improvementPct = 0;
+if(improvementPct === null || improvementPct === undefined || improvementPct === ""){
+improvementPct = "--";
 }
 
 document.getElementById("playerName").innerText = safeText(name);
-document.getElementById("playerDob").innerText = safeText(dob);
+document.getElementById("playerDob").innerText = formatDate(dob);
 document.getElementById("playerRole").innerText = safeText(role);
 document.getElementById("playerGender").innerText = safeText(gender);
 document.getElementById("latestScore").innerText = safeText(latestScore);
-document.getElementById("improvementPct").innerText = safeText(improvementPct) + "%";
+document.getElementById("improvementPct").innerText = improvementPct === "--" ? "--" : `${improvementPct}%`;
 
 }catch(error){
 console.error("Profile load failed:", error);
