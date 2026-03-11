@@ -136,6 +136,28 @@ Back to Dashboard
 
 <script>
 
+function calculateAge(dob){
+if(!dob){
+return "-";
+}
+
+const birthDate = new Date(dob);
+
+if(Number.isNaN(birthDate.getTime())){
+return "-";
+}
+
+const today = new Date();
+let age = today.getFullYear() - birthDate.getFullYear();
+const monthDiff = today.getMonth() - birthDate.getMonth();
+
+if(monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())){
+age--;
+}
+
+return age >= 0 ? age : "-";
+}
+
 async function loadPlayers(){
 
 const tableBody = document.getElementById("playersTableBody");
@@ -169,11 +191,13 @@ return;
 tableBody.innerHTML = "";
 
 players.forEach(player => {
-const latestScore = player.latest_score ?? 0;
-const improvementPct = player.improvement_pct ?? 0;
-const status = latestScore < 60 ? "At Risk" : "On Track";
+const latestScore = player.overall_score;
+const improvementPct = player.improvement_pct;
+const hasScore = latestScore !== null && latestScore !== undefined;
+const status = hasScore ? (Number(latestScore) < 60 ? "At Risk" : "On Track") : "No Assessment";
 const playerName = player.name ?? "-";
 const playerId = player.id;
+const age = calculateAge(player.dob);
 const nameCell = playerId !== undefined && playerId !== null
 ? `<a href="player-profile.html?id=${encodeURIComponent(playerId)}">${playerName}</a>`
 : playerName;
@@ -181,10 +205,10 @@ const nameCell = playerId !== undefined && playerId !== null
 tableBody.innerHTML += `
 <tr>
 <td>${nameCell}</td>
-<td>${player.age ?? "-"}</td>
+<td>${age}</td>
 <td>${player.role ?? "-"}</td>
-<td>${latestScore}</td>
-<td>${improvementPct}%</td>
+<td>${hasScore ? latestScore : "--"}</td>
+<td>${improvementPct !== null && improvementPct !== undefined ? improvementPct + "%" : "--"}</td>
 <td>${status}</td>
 </tr>
 `;
