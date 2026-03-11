@@ -70,6 +70,31 @@ a:hover{
 text-decoration:underline;
 }
 
+.score-green{
+color:#6ee7a8;
+font-weight:bold;
+}
+
+.score-orange{
+color:#f5b85c;
+font-weight:bold;
+}
+
+.score-red{
+color:#ff7a7a;
+font-weight:bold;
+}
+
+.trend-up{
+color:#6ee7a8;
+font-weight:bold;
+}
+
+.trend-down{
+color:#ff7a7a;
+font-weight:bold;
+}
+
 </style>
 
 </head>
@@ -202,13 +227,35 @@ const nameCell = playerId !== undefined && playerId !== null
 ? `<a href="player-profile.html?id=${encodeURIComponent(playerId)}">${playerName}</a>`
 : playerName;
 
+let scoreCell = "--";
+
+if(hasScore){
+const scoreNum = Number(latestScore);
+const scoreClass = scoreNum >= 70 ? "score-green" : (scoreNum >= 50 ? "score-orange" : "score-red");
+scoreCell = `<span class="${scoreClass}">${scoreNum}</span>`;
+}
+
+let improvementCell = "--";
+
+if(improvementPct !== null && improvementPct !== undefined){
+const impNum = Number(improvementPct);
+
+if(impNum > 0){
+improvementCell = `<span class="trend-up">⬆️ ${impNum}%</span>`;
+}else if(impNum < 0){
+improvementCell = `<span class="trend-down">⬇️ ${impNum}%</span>`;
+}else{
+improvementCell = "0%";
+}
+}
+
 tableBody.innerHTML += `
 <tr>
 <td>${nameCell}</td>
 <td>${age}</td>
 <td>${player.role ?? "-"}</td>
-<td>${hasScore ? latestScore : "--"}</td>
-<td>${improvementPct !== null && improvementPct !== undefined ? improvementPct + "%" : "--"}</td>
+<td>${scoreCell}</td>
+<td>${improvementCell}</td>
 <td>${status}</td>
 </tr>
 `;

@@ -4,6 +4,7 @@
 <head>
 
 <title>Player Profile</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
@@ -69,6 +70,10 @@ padding:10px 15px;
 border-radius:6px;
 cursor:pointer;
 font-weight:bold;
+}
+
+#progressChart{
+max-height:260px;
 }
 
 </style>
@@ -140,10 +145,18 @@ Back to Players
 
 </div>
 
+<div class="card">
+<h3 style="margin-top:0;">Progress Trend</h3>
+<div id="progressEmpty" style="opacity:0.8;">Loading progress...</div>
+<canvas id="progressChart" style="margin-top:12px;"></canvas>
+</div>
+
 </div>
 
 
 <script>
+
+let progressChart = null;
 
 function logout(){
 localStorage.removeItem("token");
@@ -171,6 +184,97 @@ const month = bits[1];
 const day = bits[2];
 
 return `${day}/${month}/${year}`;
+}
+
+function formatShortDate(value){
+if(!value){
+return "--";
+}
+
+const datePart = String(value).split("T")[0];
+const bits = datePart.split("-");
+
+if(bits.length !== 3){
+return value;
+}
+
+return `${bits[2]}/${bits[1]}`;
+}
+
+async function loadPlayerProgress(playerId, token){
+const emptyState = document.getElementById("progressEmpty");
+const chartCanvas = document.getElementById("progressChart");
+
+try{
+const progressRes = await fetch(`https://sportz-well-backend.onrender.com/api/player/${playerId}/progress`, {
+headers: {
+"Authorization": "Bearer " + token
+}
+});
+
+if(!progressRes.ok){
+emptyState.innerText = "Progress trend unavailable right now.";
+chartCanvas.style.display = "none";
+return;
+}
+
+const progressRows = await progressRes.json();
+
+if(!Array.isArray(progressRows) || progressRows.length === 0){
+emptyState.innerText = "No assessment history available yet.";
+chartCanvas.style.display = "none";
+return;
+}
+
+emptyState.innerText = "";
+chartCanvas.style.display = "block";
+
+const labels = progressRows.map((row,idx)=>`A${idx+1} (${formatShortDate(row.created_at)})`);
+const scores = progressRows.map((row)=>Number(row.overall_score ?? 0));
+
+if(progressChart){
+progressChart.destroy();
+}
+
+progressChart = new Chart(chartCanvas, {
+type: "line",
+data: {
+labels: labels,
+datasets: [{
+label: "Overall Score",
+data: scores,
+borderColor: "#f0c24b",
+backgroundColor: "rgba(240,194,75,0.2)",
+tension: 0.3,
+fill: true
+}]
+},
+options: {
+plugins: {
+legend: {
+labels: { color: "#ffffff" }
+}
+},
+scales: {
+x: {
+ticks: { color: "#ffffff" },
+grid: { color: "rgba(255,255,255,0.1)" }
+},
+y: {
+min: 0,
+max: 100,
+ticks: { color: "#ffffff" },
+grid: { color: "rgba(255,255,255,0.1)" }
+}
+}
+}
+});
+
+}catch(error){
+console.error("Progress load failed:", error);
+emptyState.innerText = "Progress trend unavailable right now.";
+chartCanvas.style.display = "none";
+}
 }
 
 async function loadPlayer(){
@@ -228,6 +332,7 @@ document.getElementById("playerRole").innerText = safeText(role);
 document.getElementById("playerGender").innerText = safeText(gender);
 document.getElementById("latestScore").innerText = safeText(latestScore);
 document.getElementById("improvementPct").innerText = improvementPct === "--" ? "--" : `${improvementPct}%`;
+await loadPlayerProgress(playerId, token);
 
 }catch(error){
 console.error("Profile load failed:", error);
