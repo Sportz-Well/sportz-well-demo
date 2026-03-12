@@ -274,8 +274,10 @@ async function loadDashboardMetrics(){
     const data = await response.json();
 
     document.getElementById("latestScore").innerText = data.latest_score ?? 0;
-    document.getElementById("quarterGrowth").innerText = data.quarter_growth ?? 0;
-    document.getElementById("topImprover").innerText = data.top_improver !== null ? ("Player " + data.top_improver) : "--";
+    const quarterGrowthValue = Number(data.quarter_growth ?? 0);
+    const quarterGrowthText = quarterGrowthValue > 0 ? `+${quarterGrowthValue}` : `${quarterGrowthValue}`;
+    document.getElementById("quarterGrowth").innerText = quarterGrowthText;
+    document.getElementById("topImprover").innerText = "--";
     document.getElementById("atRisk").innerText = data.at_risk_count ?? 0;
     document.getElementById("avgImprove").innerText = (data.avg_improvement ?? 0) + "%";
 
@@ -304,11 +306,29 @@ async function loadDashboardMetrics(){
           }else{
             document.getElementById("topPerformer").innerText = "--";
           }
+
+          if(data.top_improver !== null && data.top_improver !== undefined){
+            const improverPlayer = players.find((p)=>Number(p.id) === Number(data.top_improver));
+            if(improverPlayer){
+              const improverPct = improverPlayer.improvement_pct;
+              if(improverPct !== null && improverPct !== undefined){
+                const sign = Number(improverPct) > 0 ? "+" : "";
+                document.getElementById("topImprover").innerText = `${improverPlayer.name} (${sign}${improverPct}%)`;
+              }else{
+                document.getElementById("topImprover").innerText = improverPlayer.name;
+              }
+            }else{
+              document.getElementById("topImprover").innerText = "Player " + data.top_improver;
+            }
+          }else{
+            document.getElementById("topImprover").innerText = "--";
+          }
         }
       }
     }catch(err){
       console.error("Top performer fetch failed:", err);
       document.getElementById("topPerformer").innerText = "--";
+      document.getElementById("topImprover").innerText = data.top_improver !== null ? ("Player " + data.top_improver) : "--";
     }
 
     let insight = "";
@@ -329,6 +349,9 @@ async function loadDashboardMetrics(){
     const atRisk = Number(data.at_risk_count ?? 0);
     const ctx = document.getElementById("riskChart");
     const otherCount = totalPlayers > 0 ? Math.max(0, totalPlayers - atRisk) : Math.max(0, 1);
+    const totalForRisk = atRisk + otherCount;
+    const atRiskPct = totalForRisk > 0 ? Math.round((atRisk / totalForRisk) * 100) : 0;
+    const onTrackPct = totalForRisk > 0 ? 100 - atRiskPct : 0;
 
     if(riskChart){
       riskChart.destroy();
@@ -337,7 +360,7 @@ async function loadDashboardMetrics(){
     riskChart = new Chart(ctx, {
       type: "doughnut",
       data: {
-        labels: ["At Risk", "Other"],
+        labels: [`At Risk ${atRiskPct}%`, `On Track ${onTrackPct}%`],
         datasets: [{
           data: [atRisk, otherCount],
           backgroundColor: ["#ff6b6b", "#4aa3ff"]
