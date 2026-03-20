@@ -1,351 +1,299 @@
-﻿<!DOCTYPE html>
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-
-<title>Player Profile</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-
-body{
-margin:0;
-font-family:Arial;
-background:#0c233f;
-color:white;
-}
-
-header{
-padding:20px 40px;
-background:#0c233f;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-h1{
-color:#f0c24b;
-margin:0;
-}
-
-.container{
-padding:40px;
-}
-
-.card{
-background:#1e3a5c;
-padding:20px;
-border-radius:10px;
-margin-top:20px;
-}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(2,minmax(220px,1fr));
-gap:16px;
-margin-top:10px;
-}
-
-.kpi{
-background:#2c4a6f;
-border-radius:8px;
-padding:14px;
-}
-
-.kpi-label{
-opacity:0.8;
-font-size:13px;
-margin-bottom:6px;
-}
-
-.kpi-value{
-font-size:20px;
-font-weight:bold;
-}
-
-button{
-background:#f0c24b;
-border:none;
-padding:10px 15px;
-border-radius:6px;
-cursor:pointer;
-font-weight:bold;
-}
-
-#progressChart{
-max-height:260px;
-}
-
-</style>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sportz-Well | Player Profile</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    @media print {
+      body { background: white !important; color: black !important; }
+      header, .buttons, .actions { display: none !important; }
+      .container { width: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+      .panel { border: 1px solid #000 !important; box-shadow: none !important; break-inside: avoid; }
+      .card { border: 1px solid #eee !important; box-shadow: none !important; }
+      .chart-wrap { height: 250px !important; }
+      .insight-card { border: 2px solid #ccc !important; background: #fafafa !important; }
+    }
+  </style>
 </head>
-
 <body>
-
-<header>
-
-<div>
-
-<h1>Sportz-Well</h1>
-
-<div style="opacity:0.8">
-Structured Performance Intelligence
-</div>
-
-</div>
-
-<button onclick="logout()">Logout</button>
-
-</header>
-
-
-<div class="container">
-
-<button onclick="window.location.href='players.html'">
-Back to Players
-</button>
-
-<h2 style="margin-top:20px;">Player Profile</h2>
-
-<div class="card">
-
-<h3 style="margin-top:0;">Player Overview</h3>
-
-<div class="grid">
-<div class="kpi">
-<div class="kpi-label">Player Name</div>
-<div class="kpi-value" id="playerName">--</div>
-</div>
-
-<div class="kpi">
-<div class="kpi-label">Date of Birth</div>
-<div class="kpi-value" id="playerDob">--</div>
-</div>
-
-<div class="kpi">
-<div class="kpi-label">Role</div>
-<div class="kpi-value" id="playerRole">--</div>
-</div>
-
-<div class="kpi">
-<div class="kpi-label">Gender</div>
-<div class="kpi-value" id="playerGender">--</div>
-</div>
-
-<div class="kpi">
-<div class="kpi-label">Latest Score</div>
-<div class="kpi-value" id="latestScore">--</div>
-</div>
-
-<div class="kpi">
-<div class="kpi-label">Improvement %</div>
-<div class="kpi-value" id="improvementPct">--</div>
-</div>
-</div>
-
-</div>
-
-<div class="card">
-<h3 style="margin-top:0;">Progress Trend</h3>
-<div id="progressEmpty" style="opacity:0.8;">Loading progress...</div>
-<canvas id="progressChart" style="margin-top:12px;"></canvas>
-</div>
-
-</div>
-
-
-<script>
-
-let progressChart = null;
-
-function logout(){
-localStorage.removeItem("token");
-window.location.href="index.html";
-}
-
-function safeText(value){
-return value === null || value === undefined || value === "" ? "--" : value;
-}
-
-function formatDate(value){
-if(!value){
-return "--";
-}
-
-const datePart = String(value).split("T")[0];
-const bits = datePart.split("-");
-
-if(bits.length !== 3){
-return safeText(value);
-}
-
-const year = bits[0];
-const month = bits[1];
-const day = bits[2];
-
-return `${day}/${month}/${year}`;
-}
-
-function formatShortDate(value){
-if(!value){
-return "--";
-}
-
-const datePart = String(value).split("T")[0];
-const bits = datePart.split("-");
-
-if(bits.length !== 3){
-return value;
-}
-
-return `${bits[2]}/${bits[1]}`;
-}
-
-async function loadPlayerProgress(playerId, token){
-const emptyState = document.getElementById("progressEmpty");
-const chartCanvas = document.getElementById("progressChart");
-
-try{
-const progressRes = await fetch(`https://sportz-well-backend.onrender.com/api/player/${playerId}/progress`, {
-headers: {
-"Authorization": "Bearer " + token
-}
-});
-
-if(!progressRes.ok){
-emptyState.innerText = "Progress trend unavailable right now.";
-chartCanvas.style.display = "none";
-return;
-}
-
-const progressRows = await progressRes.json();
-
-if(!Array.isArray(progressRows) || progressRows.length === 0){
-emptyState.innerText = "No assessment history available yet.";
-chartCanvas.style.display = "none";
-return;
-}
-
-emptyState.innerText = "";
-chartCanvas.style.display = "block";
-
-const labels = progressRows.map((row,idx)=>`A${idx+1} (${formatShortDate(row.created_at)})`);
-const scores = progressRows.map((row)=>Number(row.overall_score ?? 0));
-
-if(progressChart){
-progressChart.destroy();
-}
-
-progressChart = new Chart(chartCanvas, {
-type: "line",
-data: {
-labels: labels,
-datasets: [{
-label: "Overall Score",
-data: scores,
-borderColor: "#f0c24b",
-backgroundColor: "rgba(240,194,75,0.2)",
-tension: 0.3,
-fill: true
-}]
-},
-options: {
-plugins: {
-legend: {
-labels: { color: "#ffffff" }
-}
-},
-scales: {
-x: {
-ticks: { color: "#ffffff" },
-grid: { color: "rgba(255,255,255,0.1)" }
-},
-y: {
-min: 0,
-max: 100,
-ticks: { color: "#ffffff" },
-grid: { color: "rgba(255,255,255,0.1)" }
-}
-}
-}
-});
-
-}catch(error){
-console.error("Progress load failed:", error);
-emptyState.innerText = "Progress trend unavailable right now.";
-chartCanvas.style.display = "none";
-}
-}
-
-async function loadPlayer(){
-
-const playerId = new URLSearchParams(window.location.search).get("id");
-const token = localStorage.getItem("token");
-
-if(!token){
-window.location.href="index.html";
-return;
-}
-
-if(!playerId){
-alert("Missing player ID");
-window.location.href="players.html";
-return;
-}
-
-try{
-const res = await fetch(`https://sportz-well-backend.onrender.com/api/player/${playerId}`, {
-headers: {
-"Authorization": "Bearer " + token
-}
-});
-
-if(!res.ok){
-alert("Unable to load player profile");
-window.location.href="players.html";
-return;
-}
-
-const data = await res.json();
-
-const player = data.player || data;
-
-const name = player.name ?? data.name;
-const dob = player.dob ?? data.dob ?? data.date_of_birth;
-const role = player.role ?? data.role;
-const gender = player.gender ?? data.gender;
-
-let latestScore = player.overall_score ?? data.overall_score ?? player.latest_score ?? data.latest_score;
-let improvementPct = player.improvement_pct ?? data.improvement_pct;
-
-if((latestScore === null || latestScore === undefined) && Array.isArray(data.trend) && data.trend.length > 0){
-latestScore = data.trend[data.trend.length - 1].score;
-}
-
-if(improvementPct === null || improvementPct === undefined || improvementPct === ""){
-improvementPct = "--";
-}
-
-document.getElementById("playerName").innerText = safeText(name);
-document.getElementById("playerDob").innerText = formatDate(dob);
-document.getElementById("playerRole").innerText = safeText(role);
-document.getElementById("playerGender").innerText = safeText(gender);
-document.getElementById("latestScore").innerText = safeText(latestScore);
-document.getElementById("improvementPct").innerText = improvementPct === "--" ? "--" : `${improvementPct}%`;
-await loadPlayerProgress(playerId, token);
-
-}catch(error){
-console.error("Profile load failed:", error);
-alert("Server error while loading profile");
-window.location.href="players.html";
-}
-
-}
-
-loadPlayer();
-
-</script>
-
-
+  <header>
+    <h1 class="brand">Sportz-Well <span>Performance Intelligence</span></h1>
+    <h2 class="title-main">Player Performance Profile</h2>
+    <p class="title-sub">Official Academy Development Record</p>
+  </header>
+
+  <div class="container">
+    <div class="buttons">
+      <button class="secondary" onclick="window.location.href='./players.html'">Back to Players</button>
+      <button class="secondary" onclick="window.location.href='./dashboard.html'">Dashboard</button>
+      <button class="accent" onclick="window.print()">Print Report (A4)</button>
+    </div>
+
+    <div id="statusBox" class="status-box" style="display:none;"></div>
+
+    <section class="panel">
+      <h3>Player Overview</h3>
+      <div class="grid">
+        <article class="card">
+          <div class="label">Full Name</div>
+          <div id="nameValue" class="value small">--</div>
+        </article>
+        <article class="card">
+          <div class="label">Standard / Grade</div>
+          <div id="stdValue" class="value small">--</div>
+        </article>
+        <article class="card">
+          <div class="label">Division</div>
+          <div id="divValue" class="value small">--</div>
+        </article>
+        <article class="card">
+          <div class="label">School ID No</div>
+          <div id="schoolIdNoValue" class="value small">--</div>
+        </article>
+        <article class="card">
+          <div class="label">Aadhaar Card No</div>
+          <div id="aadhaarValue" class="value small">--</div>
+        </article>
+        <article class="card">
+          <div class="label">Date of Birth</div>
+          <div id="dobValue" class="value small">--</div>
+        </article>
+        <article class="card">
+          <div class="label">Role</div>
+          <div id="roleValue" class="value small">--</div>
+        </article>
+        <article class="card">
+          <div class="label">Latest Score</div>
+          <div id="scoreValue" class="value small">--</div>
+        </article>
+        <article class="card">
+          <div class="label">Risk Signal</div>
+          <div id="riskValue" class="value small">--</div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>Coach Insight</h3>
+      <div id="coachInsight" class="insight-card">Loading player insight...</div>
+    </section>
+
+    <section class="panel">
+      <h3>Progress Trend</h3>
+      <div class="chart-wrap">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="./app.js"></script>
+  <script>
+    let trendChartRef = null;
+
+    const ui = {
+      statusBox: document.getElementById('statusBox'),
+      nameValue: document.getElementById('nameValue'),
+      dobValue: document.getElementById('dobValue'),
+      roleValue: document.getElementById('roleValue'),
+      scoreValue: document.getElementById('scoreValue'),
+      riskValue: document.getElementById('riskValue'),
+      coachInsight: document.getElementById('coachInsight'),
+      stdValue: document.getElementById('stdValue'),
+      divValue: document.getElementById('divValue'),
+      schoolIdNoValue: document.getElementById('schoolIdNoValue'),
+      aadhaarValue: document.getElementById('aadhaarValue')
+    };
+
+    function showStatus(message, isError = true) {
+      ui.statusBox.style.display = 'block';
+      ui.statusBox.textContent = message;
+    }
+
+    function hideStatus() {
+      ui.statusBox.style.display = 'none';
+      ui.statusBox.textContent = '';
+    }
+
+    function getPlayerIdFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return (
+        params.get('id') ||
+        params.get('playerId') ||
+        params.get('player_id') ||
+        params.get('userId') ||
+        ''
+      );
+    }
+
+    function formatDob(value) {
+      if (!value) return '--';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return '--';
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function formatScore(value) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return '--';
+      return Number(value).toFixed(1);
+    }
+
+    function getRiskSignal(riskStatus, improvementPct) {
+      const risk = String(riskStatus || '').toLowerCase();
+      const imp = Number(improvementPct || 0);
+
+      if (risk.includes('risk')) return { text: 'Needs Attention', className: 'risk' };
+      if (imp < 0) return { text: 'Declining', className: 'warn' };
+      if (imp > 0) return { text: 'Improving', className: 'ok' };
+      return { text: 'Stable', className: 'warn' };
+    }
+
+    function renderInsight(player) {
+      const signal = getRiskSignal(player.riskStatus, player.improvementPct);
+      if (signal.className === 'risk') {
+        ui.coachInsight.textContent = `${player.name} needs extra attention this quarter. Focus on weekly corrective sessions.`;
+        return;
+      }
+      if (signal.className === 'ok') {
+        ui.coachInsight.textContent = `${player.name} is improving. Continue current plan and reinforce strengths.`;
+        return;
+      }
+      ui.coachInsight.textContent = `${player.name} is stable. Add one targeted training intervention to push growth.`;
+    }
+
+    function renderProfile(player) {
+      const signal = getRiskSignal(player.riskStatus, player.improvementPct);
+
+      ui.nameValue.textContent = player.name || '--';
+      ui.dobValue.textContent = formatDob(player.dob || player.date_of_birth || player.dateOfBirth);
+      ui.roleValue.textContent = player.role || '--';
+      ui.scoreValue.textContent = formatScore(player.overall_score || player.latestScore);
+      ui.riskValue.innerHTML = `<span class="signal ${signal.className}">${signal.text}</span>`;
+      
+      ui.stdValue.textContent = player.std || '--';
+      ui.divValue.textContent = player.div || '--';
+      ui.schoolIdNoValue.textContent = player.school_id_no || '--';
+      ui.aadhaarValue.textContent = player.aadhaar_card_no || '--';
+
+      renderInsight(player);
+    }
+
+    function extractTrendRows(raw) {
+      if (!raw) return [];
+      if (Array.isArray(raw)) return raw;
+      if (Array.isArray(raw.data)) return raw.data;
+      if (raw.data && Array.isArray(raw.data.trend)) return raw.data.trend;
+      if (Array.isArray(raw.trend)) return raw.trend;
+      return [];
+    }
+
+    async function fetchPlayerTrend(playerId) {
+      const paths = [
+        `/api/v1/players/${encodeURIComponent(playerId)}/quarterly-trend`,
+        `/api/players/${encodeURIComponent(playerId)}/quarterly-trend`,
+        `/api/v1/analytics/players/${encodeURIComponent(playerId)}/trend`
+      ];
+
+      try {
+        const response = await SWPI.requestFirst(paths);
+        return extractTrendRows(response);
+      } catch (_error) {
+        return [];
+      }
+    }
+
+    function renderTrendChart(rows) {
+      const labels = rows.map((row) => row.quarterlyCycle || row.quarter || 'Quarter');
+      const values = rows.map((row) => {
+        const n = row.overallScore ?? row.overall_score ?? row.averageOverallScore ?? row.average_overall_score ?? null;
+        return n === null || n === undefined ? null : Number(n);
+      });
+
+      const ctx = document.getElementById('trendChart');
+
+      if (trendChartRef) trendChartRef.destroy();
+
+      trendChartRef = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels.length ? labels : ['No Data'],
+          datasets: [
+            {
+              label: 'Score Trend',
+              data: values.length ? values : [null],
+              borderColor: '#d4af37',
+              backgroundColor: 'rgba(212,175,55,0.1)',
+              fill: true,
+              tension: 0.3,
+              borderWidth: 3,
+              pointRadius: 4,
+              pointBackgroundColor: '#1a1a1a'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { labels: { color: '#1a1a1a', font: { weight: 'bold' } } } 
+          },
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              ticks: { color: '#4a4a4a' },
+              grid: { color: '#e0e0e0' }
+            },
+            x: {
+              ticks: { color: '#4a4a4a' },
+              grid: { color: '#e0e0e0' }
+            }
+          }
+        }
+      });
+    }
+
+    async function getPlayerWithFallback(playerId) {
+      try {
+        return await SWPI.fetchPlayerById(playerId);
+      } catch (_error) {
+        const all = await SWPI.fetchPlayers();
+        return all.find((p) => String(p.id) === String(playerId)) || null;
+      }
+    }
+
+    async function initProfilePage() {
+      hideStatus();
+
+      if (!SWPI.getToken()) {
+        showStatus('Session expired. Please login again.');
+        return;
+      }
+
+      const playerId = getPlayerIdFromUrl();
+      if (!playerId) {
+        showStatus('Missing player id in URL.');
+        return;
+      }
+
+      try {
+        const player = await getPlayerWithFallback(playerId);
+        if (!player) {
+          showStatus('Player not found. Please return to Players page and open again.');
+          return;
+        }
+
+        renderProfile(player);
+        const trendRows = await fetchPlayerTrend(player.id);
+        renderTrendChart(trendRows);
+      } catch (error) {
+        showStatus(`Unable to load player profile.\nStatus: ${error.status || '--'}\nMessage: ${error.message}`);
+      }
+    }
+
+    initProfilePage();
+  </script>
 </body>
 </html>

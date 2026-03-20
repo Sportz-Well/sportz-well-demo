@@ -1,89 +1,122 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-
-<title>Sportz-Well Login</title>
-
-<link rel="stylesheet" href="styles.css">
-
-<script src="app.js"></script>
-
-<style>
-
-body{
-margin:0;
-font-family:Arial;
-background:#0c233f;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-color:white;
-}
-
-.login-box{
-background:#1c3b63;
-padding:40px;
-border-radius:10px;
-width:350px;
-text-align:center;
-}
-
-input{
-width:90%;
-padding:10px;
-margin:10px 0;
-border:none;
-border-radius:5px;
-}
-
-button{
-background:#f2c14e;
-border:none;
-padding:12px;
-width:95%;
-font-weight:bold;
-cursor:pointer;
-border-radius:5px;
-}
-
-</style>
-
+  <title>Sportz-Well Login</title>
+  <style>
+    body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      background:#0c233f;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+      color:white;
+      padding:16px;
+    }
+    .login-box{
+      background:#1c3b63;
+      padding:28px;
+      border-radius:10px;
+      width:360px;
+      text-align:center;
+      border:1px solid rgba(255,255,255,0.1);
+    }
+    input{
+      width:100%;
+      box-sizing:border-box;
+      padding:10px;
+      margin:8px 0;
+      border:none;
+      border-radius:6px;
+    }
+    button{
+      background:#f2c14e;
+      border:none;
+      padding:12px;
+      width:100%;
+      font-weight:bold;
+      cursor:pointer;
+      border-radius:6px;
+      margin-top:8px;
+      color:#0c233f;
+    }
+    .status{
+      margin-top:10px;
+      font-size:13px;
+      text-align:left;
+      white-space:pre-wrap;
+      opacity:0.9;
+    }
+  </style>
 </head>
-
-
 <body>
+  <div class="login-box">
+    <h2 style="margin:0;color:#f2c14e;">Sportz-Well</h2>
+    <p style="margin:6px 0 16px;">Performance Intelligence</p>
 
-<div class="login-box">
+    <input id="email" type="email" placeholder="Email Address" />
+    <input id="password" type="password" placeholder="Password" />
 
-<h2>Sportz-Well</h2>
+    <button onclick="handleLogin()">Login</button>
+    <div id="status" class="status"></div>
+  </div>
 
-<p>Performance Intelligence</p>
+  <script>
+    const API_BASE = 'https://sportz-well-backend.onrender.com';
 
-<input id="email" type="email" placeholder="Email Address">
+    function setStatus(message) {
+      document.getElementById('status').innerText = message || '';
+    }
 
-<input id="password" type="password" placeholder="Password">
+    async function tryLogin(url, payload) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-<button onclick="handleLogin()">Login</button>
+      const text = await response.text();
+      let data = {};
+      try { data = text ? JSON.parse(text) : {}; } catch (_) {}
 
-</div>
+      return { ok: response.ok, status: response.status, data, text };
+    }
 
+    async function handleLogin() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
 
-<script>
+      if (!email || !password) {
+        setStatus('Please enter email and password.');
+        return;
+      }
 
-function handleLogin(){
+      setStatus('Logging in...');
 
-const email=document.getElementById("email").value;
-const password=document.getElementById("password").value;
+      const payload = { email, password };
+      const urls = [
+        `${API_BASE}/api/v1/demo-login`,
+        `${API_BASE}/api/demo-login`,
+        `${API_BASE}/api/login`,
+        `${API_BASE}/api/v1/login`,
+        `${API_BASE}/api/v1/auth/login`
+      ];
 
-loginUser(email,password);
+      for (const url of urls) {
+        try {
+          const result = await tryLogin(url, payload);
+          if (result.ok && result.data.token) {
+            localStorage.setItem('token', result.data.token);
+            localStorage.setItem('swpi_user_email', email);
+            window.location.href = 'dashboard.html';
+            return;
+          }
+        } catch (_) {}
+      }
 
-}
-
-</script>
-
-
+      setStatus('Login failed. Please verify credentials.');
+    }
+  </script>
 </body>
-
 </html>
