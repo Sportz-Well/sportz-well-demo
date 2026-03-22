@@ -374,10 +374,10 @@
         .map((player) => {
           const signal = getSignal(player);
           const safeId = encodeURIComponent(player.id || '');
-          const std = player.std || '--';
-          const div = player.div || '--';
-          const schoolIdNo = player.school_id_no || '--';
-          const aadhaarNo = player.aadhaar_card_no || '--';
+          const std = player.std || player.standard || '--';
+          const div = player.div || player.division || '--';
+          const schoolIdNo = player.school_id_no || player.schoolIdNo || player.school_id || '--';
+          const aadhaarNo = player.aadhaar_card_no || player.aadhaarCardNo || player.aadhaar || '--';
           const playerNameLink = `<a href="#" onclick="event.preventDefault(); loadPlayerTrend('${safeId}', '${player.name}');" style="cursor: pointer; color: #d4af37; text-decoration: none;">${player.name}</a>`;
           return `
             <tr>

@@ -253,10 +253,10 @@
       // Use score-based signal instead of risk status
       ui.riskValue.innerHTML = `<span class="signal ${insight.signalClass}">${insight.signalText}</span>`;
       
-      ui.stdValue.textContent = player.std || '--';
-      ui.divValue.textContent = player.div || '--';
-      ui.schoolIdNoValue.textContent = player.school_id_no || '--';
-      ui.aadhaarValue.textContent = player.aadhaar_card_no || '--';
+      ui.stdValue.textContent = player.std || player.standard || '--';
+      ui.divValue.textContent = player.div || player.division || '--';
+      ui.schoolIdNoValue.textContent = player.school_id_no || player.schoolIdNo || player.school_id || '--';
+      ui.aadhaarValue.textContent = player.aadhaar_card_no || player.aadhaarCardNo || player.aadhaar || '--';
 
       renderInsight(player);
     }
