@@ -87,12 +87,14 @@
         dob: document.getElementById("dob").value,
         gender: document.getElementById("gender").value
       };
-
+      
       try {
+        const token = localStorage.getItem('token');
         const res = await fetch(`${API_BASE}/api/v1/players`, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify(data)
         });
