@@ -184,10 +184,9 @@
       hideStatus();
 
       try {
-        if (!SWPI.getToken()) {
-          showStatus('Session expired. Please open login page and sign in again.');
-          ui.playersTableBody.innerHTML =
-            '<tr><td colspan="6" class="empty-state">Please login to load players.</td></tr>';
+        const token = SWPI.getToken();
+        if (!token) {
+          window.location.href = 'login.html';
           return;
         }
 

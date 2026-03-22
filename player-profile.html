@@ -267,8 +267,9 @@
     async function initProfilePage() {
       hideStatus();
 
-      if (!SWPI.getToken()) {
-        showStatus('Session expired. Please login again.');
+      const token = SWPI.getToken();
+      if (!token) {
+        window.location.href = 'login.html';
         return;
       }
 

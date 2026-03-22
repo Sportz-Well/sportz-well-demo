@@ -74,6 +74,12 @@
   <script>
     const API_BASE = "https://sportz-well-backend.onrender.com";
 
+    // Check authentication
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = 'login.html';
+    }
+
     async function addPlayer() {
       const messageDiv = document.getElementById("message");
       messageDiv.innerHTML = "";

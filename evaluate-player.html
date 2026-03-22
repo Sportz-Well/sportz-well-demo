@@ -3,10 +3,25 @@
 <head>
     <title>Evaluate Player</title>
     <link rel="stylesheet" href="styles.css">
+    <script>
+      // Check authentication immediately
+      const token = localStorage.getItem("token");
+      if (!token) {
+        window.location.href = "login.html";
+      }
+    </script>
 </head>
 <body>
 
 <h2>Quarterly Evaluation</h2>
+
+<script>
+  // Check authentication immediately
+  const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.href = "login.html";
+  }
+</script>
 
 <div>
     <h3>Live Summary</h3>
