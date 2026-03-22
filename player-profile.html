@@ -6,6 +6,34 @@
   <title>Sportz-Well | Player Profile</title>
   <link rel="stylesheet" href="styles.css">
   <style>
+    .insight-card {
+      padding: 16px;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      font-size: 15px;
+      line-height: 1.6;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .insight-card.insight-critical {
+      background: rgba(220, 53, 69, 0.1);
+      border-color: #dc3545;
+      color: #721c24;
+    }
+
+    .insight-card.insight-stable {
+      background: rgba(255, 193, 7, 0.1);
+      border-color: #ffc107;
+      color: #856404;
+    }
+
+    .insight-card.insight-excellent {
+      background: rgba(40, 167, 69, 0.1);
+      border-color: #28a745;
+      color: #155724;
+    }
+
     @media print {
       body { background: white !important; color: black !important; }
       header, .buttons, .actions { display: none !important; }
@@ -150,27 +178,80 @@
       return { text: 'Stable', className: 'warn' };
     }
 
+    function generateCoachInsight(player) {
+      const playerName = player.name || 'Player';
+      const score = Number(player.overall_score || player.latestScore || 0);
+      
+      let insight = {
+        level: 'stable',
+        message: '',
+        className: 'warn',
+        signalText: 'Stable',
+        signalClass: 'warn'
+      };
+
+      if (score < 5) {
+        insight.level = 'critical';
+        insight.message = `${playerName} is AT RISK. Immediate technical intervention required.`;
+        insight.className = 'risk';
+        insight.signalText = 'At Risk';
+        insight.signalClass = 'risk';
+      } else if (score >= 5 && score <= 7) {
+        insight.level = 'stable';
+        insight.message = `${playerName} is STABLE. Continue structured assessments.`;
+        insight.className = 'warn';
+        insight.signalText = 'Stable';
+        insight.signalClass = 'warn';
+      } else if (score > 7) {
+        insight.level = 'excellent';
+        insight.message = `${playerName} is EXCELLENT. Ready for advanced squad selection.`;
+        insight.className = 'ok';
+        insight.signalText = 'Excellent';
+        insight.signalClass = 'ok';
+      }
+
+      return insight;
+    }
+
     function renderInsight(player) {
-      const signal = getRiskSignal(player.riskStatus, player.improvementPct);
-      if (signal.className === 'risk') {
-        ui.coachInsight.textContent = `${player.name} needs extra attention this quarter. Focus on weekly corrective sessions.`;
-        return;
+      const insight = generateCoachInsight(player);
+      
+      ui.coachInsight.textContent = insight.message;
+      ui.coachInsight.className = `insight-card insight-${insight.level}`;
+      
+      // Apply styling based on performance level
+      if (insight.level === 'critical') {
+        ui.coachInsight.style.background = 'rgba(220, 53, 69, 0.1)';
+        ui.coachInsight.style.borderColor = '#dc3545';
+        ui.coachInsight.style.color = '#721c24';
+      } else if (insight.level === 'stable') {
+        ui.coachInsight.style.background = 'rgba(255, 193, 7, 0.1)';
+        ui.coachInsight.style.borderColor = '#ffc107';
+        ui.coachInsight.style.color = '#856404';
+      } else if (insight.level === 'excellent') {
+        ui.coachInsight.style.background = 'rgba(40, 167, 69, 0.1)';
+        ui.coachInsight.style.borderColor = '#28a745';
+        ui.coachInsight.style.color = '#155724';
       }
-      if (signal.className === 'ok') {
-        ui.coachInsight.textContent = `${player.name} is improving. Continue current plan and reinforce strengths.`;
-        return;
+    }
+        ui.coachInsight.style.color = '#856404';
+      } else if (insight.level === 'excellent') {
+        ui.coachInsight.style.background = 'rgba(40, 167, 69, 0.1)';
+        ui.coachInsight.style.borderColor = '#28a745';
+        ui.coachInsight.style.color = '#155724';
       }
-      ui.coachInsight.textContent = `${player.name} is stable. Add one targeted training intervention to push growth.`;
     }
 
     function renderProfile(player) {
-      const signal = getRiskSignal(player.riskStatus, player.improvementPct);
+      const insight = generateCoachInsight(player);
 
       ui.nameValue.textContent = player.name || '--';
       ui.dobValue.textContent = formatDob(player.dob || player.date_of_birth || player.dateOfBirth);
       ui.roleValue.textContent = player.role || '--';
       ui.scoreValue.textContent = formatScore(player.overall_score || player.latestScore);
-      ui.riskValue.innerHTML = `<span class="signal ${signal.className}">${signal.text}</span>`;
+      
+      // Use score-based signal instead of risk status
+      ui.riskValue.innerHTML = `<span class="signal ${insight.signalClass}">${insight.signalText}</span>`;
       
       ui.stdValue.textContent = player.std || '--';
       ui.divValue.textContent = player.div || '--';
