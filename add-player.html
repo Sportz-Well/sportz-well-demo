@@ -36,6 +36,33 @@
       cursor: pointer;
     }
 
+    .header-nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: flex-end;
+    }
+
+    .header-nav button {
+      width: auto;
+      padding: 10px 20px;
+      margin: 0;
+      background: #4a90e2;
+      color: white;
+    }
+
+    .header-nav button:hover {
+      background: #357abd;
+    }
+
+    .header-nav .logout-btn {
+      background: #e74c3c;
+    }
+
+    .header-nav .logout-btn:hover {
+      background: #c0392b;
+    }
+
     .error {
       color: red;
       margin-bottom: 10px;
@@ -49,6 +76,11 @@
 </head>
 
 <body>
+
+  <div class="header-nav">
+    <button onclick="goToDashboard()">Back to Dashboard</button>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
 
   <div class="container">
     <h2>Add New Player</h2>
@@ -68,6 +100,14 @@
       <option value="Female">Female</option>
     </select>
 
+    <select id="role" required>
+      <option value="">Select Player Role *</option>
+      <option value="Batsman">Batsman</option>
+      <option value="Bowler">Bowler</option>
+      <option value="All-Rounder">All-Rounder</option>
+      <option value="Wicketkeeper">Wicketkeeper</option>
+    </select>
+
     <button onclick="addPlayer()">Submit</button>
   </div>
 
@@ -77,6 +117,15 @@
     // Check authentication
     const token = localStorage.getItem('token');
     if (!token) {
+      window.location.href = 'login.html';
+    }
+
+    function goToDashboard() {
+      window.location.href = 'dashboard.html';
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
       window.location.href = 'login.html';
     }
 
@@ -91,7 +140,8 @@
         school_id_no: document.getElementById("school_id_no").value,
         aadhaar_card_no: document.getElementById("aadhaar_card_no").value,
         dob: document.getElementById("dob").value,
-        gender: document.getElementById("gender").value
+        gender: document.getElementById("gender").value,
+        role: document.getElementById("role").value
       };
       
       try {
