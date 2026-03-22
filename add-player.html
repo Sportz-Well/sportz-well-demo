@@ -1,190 +1,116 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <title>Add Player</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sportz-Well | Add Player</title>
-  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f2747;
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #1c3b63;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      background: #f4c542;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .error {
+      color: red;
+      margin-bottom: 10px;
+    }
+
+    .success {
+      color: #00ff99;
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
+
 <body>
-  <header>
-    <h1 class="brand">Sportz-Well <span>Performance Intelligence</span></h1>
-    <h2 class="title-main">Add New Player</h2>
-    <p class="title-sub">Register a player for the U14 Squad</p>
-  </header>
 
-  <div class="container" style="max-width: 600px;">
-    <div class="card">
-      <h2 style="margin-top:0;">Player Registration</h2>
+  <div class="container">
+    <h2>Add New Player</h2>
 
-      <div id="status" class="status-box" style="display:none;"></div>
+    <div id="message"></div>
 
-      <label for="name">Full Name</label>
-      <input id="name" placeholder="Full name of the player" />
+    <input id="name" placeholder="Full Name" />
+    <input id="std" placeholder="Standard (e.g. 9)" />
+    <input id="div" placeholder="Division (e.g. B)" />
+    <input id="school_id_no" placeholder="School ID Number" />
+    <input id="aadhaar_card_no" placeholder="Aadhaar Number" />
+    <input id="dob" type="date" />
+    
+    <select id="gender">
+      <option value="">Select Gender</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+    </select>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-        <div>
-          <label for="std">Standard / Grade</label>
-          <input id="std" placeholder="e.g. 8th" />
-        </div>
-        <div>
-          <label for="div">Division / Section</label>
-          <input id="div" placeholder="e.g. A" />
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-        <div>
-          <label for="school_id_no">School ID Number</label>
-          <input id="school_id_no" placeholder="Unique school ID" />
-        </div>
-        <div>
-          <label for="aadhaar_card_no">Aadhaar Card Number</label>
-          <input id="aadhaar_card_no" placeholder="12-digit number" maxlength="12" />
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-        <div>
-          <label for="dob">Date of Birth</label>
-          <input id="dob" type="date" />
-        </div>
-        <div>
-          <label for="gender">Gender</label>
-          <select id="gender">
-            <option>Male</option>
-            <option>Female</option>
-            <option>Other</option>
-          </select>
-        </div>
-      </div>
-
-      <label for="role">Primary Playing Role</label>
-      <select id="role">
-        <option>Batsman</option>
-        <option>Bowler</option>
-        <option>Wicketkeeper</option>
-        <option>All Rounder</option>
-      </select>
-
-      <div class="buttons" style="margin-top: 20px;">
-        <button class="accent" onclick="addPlayer()">Register Player</button>
-        <button class="secondary" onclick="window.location.href='dashboard.html'">Cancel</button>
-      </div>
-    </div>
+    <button onclick="addPlayer()">Submit</button>
   </div>
 
   <script>
-    const API_BASE = 'https://sportz-well-backend.onrender.com';
-
-    function setStatus(message) {
-      const el = document.getElementById('status');
-      if (!message) {
-        el.style.display = 'none';
-        el.innerText = '';
-        return;
-      }
-      el.style.display = 'block';
-      el.innerText = message;
-    }
-
-    function calculateAge(dob) {
-      if (!dob) return null;
-      const birthDate = new Date(dob);
-      if (Number.isNaN(birthDate.getTime())) return null;
-
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
-      return age >= 0 ? age : null;
-    }
+    const API_BASE = "https://sportz-well-backend.onrender.com";
 
     async function addPlayer() {
+      const messageDiv = document.getElementById("message");
+      messageDiv.innerHTML = "";
+
+      const data = {
+        name: document.getElementById("name").value,
+        std: document.getElementById("std").value,
+        div: document.getElementById("div").value,
+        school_id_no: document.getElementById("school_id_no").value,
+        aadhaar_card_no: document.getElementById("aadhaar_card_no").value,
+        dob: document.getElementById("dob").value,
+        gender: document.getElementById("gender").value
+      };
+
       try {
-        setStatus('');
+        const res = await fetch(`${API_BASE}/api/v1/players`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        });
 
-        const name = document.getElementById('name').value.trim();
-        const dob = document.getElementById('dob').value;
-        const gender = document.getElementById('gender').value;
-        const role = document.getElementById('role').value;
-        const std = document.getElementById('std').value.trim();
-        const div = document.getElementById('div').value.trim();
-        const school_id_no = document.getElementById('school_id_no').value.trim();
-        const aadhaar_card_no = document.getElementById('aadhaar_card_no').value.trim();
+        const result = await res.json();
 
-        if (!name) {
-          setStatus('Player name is required.');
+        if (!res.ok) {
+          messageDiv.innerHTML = `<div class="error">${result.error || "Failed to add player"}</div>`;
           return;
         }
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-          window.location.href = 'login.html';
-          return;
-        }
+        messageDiv.innerHTML = `<div class="success">Player added successfully</div>`;
 
-        const payload = {
-          name,
-          dob,
-          age: calculateAge(dob),
-          gender,
-          role,
-          std,
-          div,
-          school_id_no,
-          aadhaar_card_no
-        };
-
-        const urls = [
-          `${API_BASE}/api/v1/players`,
-          `${API_BASE}/api/v1/players/players`,
-          `${API_BASE}/api/players`,
-          `${API_BASE}/api/players/players`
-        ];
-
-        let success = false;
-        let lastErr = '';
-
-        for (const url of urls) {
-          try {
-            const res = await fetch(url, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-              },
-              body: JSON.stringify(payload)
-            });
-
-            const text = await res.text();
-            if (res.ok) {
-              success = true;
-              break;
-            }
-            lastErr = text || `HTTP ${res.status}`;
-          } catch (e) {
-            lastErr = e.message;
-          }
-        }
-
-        if (!success) {
-          setStatus(`Error adding player.\n${lastErr}`);
-          return;
-        }
-
-        alert('Player added successfully');
-        window.location.href = 'players.html';
-      } catch (error) {
-        console.error(error);
-        setStatus(`Error adding player.\n${error.message}`);
+      } catch (err) {
+        messageDiv.innerHTML = `<div class="error">${err.message}</div>`;
       }
     }
-
-    function logout() {
-      localStorage.removeItem('token');
-      window.location.href = 'login.html';
-    }
   </script>
+
 </body>
 </html>
