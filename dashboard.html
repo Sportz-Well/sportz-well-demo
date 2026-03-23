@@ -1,351 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sportz-Well Dashboard</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>SWPI Dashboard</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #0b1f3a;
+      color: white;
+      padding: 20px;
+    }
+    .card {
+      background: #132f57;
+      padding: 20px;
+      margin: 10px;
+      border-radius: 10px;
+      display: inline-block;
+      width: 200px;
+      text-align: center;
+    }
+    h1 {
+      text-align: center;
+    }
+  </style>
 </head>
+
 <body>
-  <header>
-    <h1 class="brand">Sportz-Well <span>Performance Intelligence</span></h1>
-    <h2 class="title-main">Cricket Academy Dashboard</h2>
-    <p class="title-sub">U14 Squad Performance Dashboard</p>
-  </header>
 
-  <div class="container">
-    <div id="statusBox" class="status-box"></div>
+<h1>SPORTZ-WELL PERFORMANCE INTELLIGENCE</h1>
 
-    <div class="cards">
-      <div class="card"><div class="card-title">Latest Score</div><div class="card-value" id="latestScore">--</div></div>
-      <div class="card"><div class="card-title">Quarter Growth</div><div class="card-value" id="quarterGrowth">--</div></div>
-      <div class="card"><div class="card-title">Latest Quarter</div><div class="card-value small" id="latestQuarter">--</div></div>
+<div class="card">
+  <h3>Total Players</h3>
+  <p id="players">--</p>
+</div>
 
-      <div class="card"><div class="card-title">Top Improver</div><div class="card-value small" id="topImprover">--</div></div>
-      <div class="card"><div class="card-title">Top Performer</div><div class="card-value small" id="topPerformer">--</div></div>
-      <div class="card"><div class="card-title">At Risk</div><div class="card-value" id="atRisk">--</div></div>
+<div class="card">
+  <h3>Avg Score</h3>
+  <p id="avg">--</p>
+</div>
 
-      <div class="card"><div class="card-title">Avg Improve %</div><div class="card-value" id="avgImprove">--</div></div>
-      <div class="card"><div class="card-title">Player Count</div><div class="card-value" id="playerCount">--</div></div>
-      <div class="card"><div class="card-title">Data Quality</div><div class="card-value small" id="dataQuality">Verified Data</div></div>
-    </div>
+<div class="card">
+  <h3>Latest Score</h3>
+  <p id="latest">--</p>
+</div>
 
-    <div class="insight-title">Coach Insight</div>
-    <div id="coachInsight" class="insight-card">Loading insight...</div>
-    <p id="lastUpdated">Last updated at --</p>
+<div class="card">
+  <h3>At Risk</h3>
+  <p id="risk">--</p>
+</div>
 
-    <div class="buttons">
-      <button onclick="window.location.href='players.html'">View Players Directory</button>
-      <button onclick="window.location.href='add-player.html'">Add Player</button>
-      <button onclick="window.location.href='assessment-session.html'">Quarterly Assessment</button>
-      <button id="resetDemoBtn" style="display:none;" onclick="resetDemoData()">Reset Demo Data (15 Players)</button>
-    </div>
+<script>
+async function loadDashboard() {
+  try {
+    const res = await fetch('https://sportz-well-backend.onrender.com/api/v1/analytics/dashboard');
+    const data = await res.json();
 
-    <div class="charts-grid">
-      <div class="panel">
-        <h3>School Trend (Average of All Players)</h3>
-        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
-        <div id="trendEmpty" class="empty-note">No trend data available yet.</div>
-      </div>
-      <div class="panel">
-        <h3>Risk Distribution</h3>
-        <div class="chart-wrap"><canvas id="riskChart"></canvas></div>
-      </div>
-    </div>
-  </div>
+    document.getElementById('players').innerText = data.total_players;
+    document.getElementById('avg').innerText = data.avg_score;
+    document.getElementById('latest').innerText = data.latest_score;
+    document.getElementById('risk').innerText = data.at_risk;
 
-  <script>
-    const API_BASE = 'https://sportz-well-backend.onrender.com';
-    
-    // Check authentication
-    const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = 'login.html';
-    }
-    
-    const params = new URLSearchParams(window.location.search);
-    const schoolId = params.get('schoolId') || '';
-    const querySuffix = schoolId ? `?schoolId=${encodeURIComponent(schoolId)}` : '';
+  } catch (err) {
+    console.error(err);
+    alert("Dashboard failed to load");
+  }
+}
 
-    const DASHBOARD_URL = `${API_BASE}/api/v1/analytics/dashboard${querySuffix}`;
-    const TREND_URL = `${API_BASE}/api/v1/analytics/trend${querySuffix}`;
-    const RESET_URL = `${API_BASE}/api/v1/demo/reset`;
+loadDashboard();
+</script>
 
-    let trendChart = null;
-    let riskChart = null;
-
-    function setStatus(message) {
-      const box = document.getElementById('statusBox');
-      box.style.display = 'block';
-      box.innerText = message;
-    }
-
-    function setText(id, value) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.innerText = value;
-      el.title = value;
-    }
-
-    function toNum(v, fallback = 0) {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : fallback;
-    }
-
-    function fmt(v, decimals = 2) {
-      return toNum(v).toFixed(decimals).replace(/\.00$/, '');
-    }
-
-    function shortId(value) {
-      const s = String(value || '');
-      if (!s) return '';
-      if (s.length <= 16) return s;
-      return `${s.slice(0, 8)}...${s.slice(-4)}`;
-    }
-
-    function growthSignal(value) {
-      const n = toNum(value);
-      if (n > 0) return `↑ ${fmt(n, 2)}%`;
-      if (n < 0) return `↓ ${fmt(Math.abs(n), 2)}%`;
-      return '→ 0%';
-    }
-
-    function normalizeSummary(raw) {
-      return {
-        latestQuarterlyCycle: raw.latestQuarterlyCycle ?? raw.latest_quarterly_cycle ?? '--',
-        latestScore: toNum(raw.latestScore ?? raw.latest_score ?? 0),
-        quarterGrowthPct: toNum(raw.quarterGrowthPct ?? raw.quarter_growth_pct ?? raw.quarter_growth ?? 0),
-        topPerformer: raw.topPerformer ?? raw.top_performer ?? null,
-        topImprover: raw.topImprover ?? raw.top_improver ?? null,
-        atRiskPlayers: toNum(raw.atRiskPlayers ?? raw.at_risk_players ?? raw.at_risk_count ?? 0),
-        averageImprovementPct: toNum(raw.averageImprovementPct ?? raw.average_improvement_pct ?? raw.avg_improvement ?? 0),
-        playerCount: toNum(raw.playerCount ?? raw.player_count ?? 0)
-      };
-    }
-
-    function normalizeTrend(rows) {
-      if (!Array.isArray(rows)) return [];
-      return rows.map((r) => ({
-        quarterlyCycle: r.quarterlyCycle ?? r.quarterly_cycle ?? '--',
-        averageOverallScore: toNum(r.averageOverallScore ?? r.average_overall_score ?? 0),
-        playersCount: toNum(r.playersCount ?? r.players_count ?? 0)
-      }));
-    }
-
-    function playerLabel(obj) {
-      if (!obj) return '--';
-      const name = String(obj.name || '').trim();
-      const id = obj.playerId || obj.player_id || '';
-      if (!name) return `Player ${shortId(id)}`;
-      if (/^player\s+/i.test(name)) {
-        const maybe = name.replace(/^player\s+/i, '').trim();
-        return `Player ${shortId(maybe || id)}`;
-      }
-      return name;
-    }
-
-    async function getJson(url) {
-      const token = localStorage.getItem('token');
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const res = await fetch(url, { method: 'GET', headers });
-      const text = await res.text();
-      let body = {};
-      try { body = text ? JSON.parse(text) : {}; } catch (_) {}
-
-      if (!res.ok) {
-        throw new Error(`URL: ${url}\nStatus: ${res.status}\nResponse: ${text}`);
-      }
-      return body;
-    }
-
-    function buildInsight(atRisk, growth) {
-      if (atRisk >= 5) return `${atRisk} players need attention. Prioritize corrective drills this week.`;
-      if (growth > 0) return 'Team trend is improving quarter-on-quarter.';
-      if (growth < 0) return 'Performance is declining. Focus on fundamentals.';
-      return 'Team baseline is stable. Continue structured assessments.';
-    }
-
-    function bindSummary(summary) {
-      setText('latestScore', fmt(summary.latestScore, 2));
-      setText('quarterGrowth', growthSignal(summary.quarterGrowthPct));
-      setText('latestQuarter', summary.latestQuarterlyCycle || '--');
-
-      if (summary.topPerformer) {
-        setText('topPerformer', `${playerLabel(summary.topPerformer)} (${fmt(summary.topPerformer.overallScore, 1)})`);
-      } else {
-        setText('topPerformer', '--');
-      }
-
-      if (summary.topImprover) {
-        const p = toNum(summary.topImprover.improvementPct);
-        const arrow = p > 0 ? '↑' : (p < 0 ? '↓' : '→');
-        setText('topImprover', `${playerLabel(summary.topImprover)} (${arrow} ${fmt(Math.abs(p), 1)}%)`);
-      } else {
-        setText('topImprover', '--');
-      }
-
-      setText('atRisk', String(summary.atRiskPlayers));
-      setText('avgImprove', `${fmt(summary.averageImprovementPct, 2)}%`);
-      setText('playerCount', String(summary.playerCount));
-      setText('coachInsight', buildInsight(summary.atRiskPlayers, summary.quarterGrowthPct));
-      setText('lastUpdated', `Last updated at ${new Date().toLocaleString('en-IN')}`);
-    }
-
-    function drawTrend(trend) {
-      const empty = document.getElementById('trendEmpty');
-      const labels = trend.map((t) => t.quarterlyCycle);
-      const values = trend.map((t) => t.averageOverallScore);
-
-      if (trendChart) trendChart.destroy();
-
-      if (!labels.length) {
-        empty.style.display = 'block';
-        return;
-      }
-
-      empty.style.display = 'none';
-
-      trendChart = new Chart(document.getElementById('trendChart'), {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Avg Score',
-            data: values,
-            borderColor: '#d4af37',
-            backgroundColor: 'rgba(212,175,55,0.1)',
-            borderWidth: 3,
-            pointRadius: 4,
-            pointBackgroundColor: '#1a1a1a',
-            tension: 0.3,
-            fill: true
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { 
-            legend: { 
-              labels: { color: '#1a1a1a', boxWidth: 14, font: { size: 12, weight: 'bold' } } 
-            } 
-          },
-          scales: {
-            x: { 
-              ticks: { color: '#4a4a4a', font: { size: 11 } }, 
-              grid: { color: '#e0e0e0' } 
-            },
-            y: { 
-              min: 0, 
-              max: 100, 
-              ticks: { color: '#4a4a4a', stepSize: 20, font: { size: 11 } }, 
-              grid: { color: '#e0e0e0' } 
-            }
-          }
-        }
-      });
-    }
-
-    function drawRisk(summary, trend) {
-      const total = Math.max(summary.playerCount, trend.length ? trend[trend.length - 1].playersCount : 0);
-      const atRisk = Math.max(0, summary.atRiskPlayers);
-      const onTrack = Math.max(0, total - atRisk);
-
-      if (riskChart) riskChart.destroy();
-
-      riskChart = new Chart(document.getElementById('riskChart'), {
-        type: 'doughnut',
-        data: {
-          labels: ['At Risk', 'On Track'],
-          datasets: [{ 
-            data: [atRisk, onTrack], 
-            backgroundColor: ['#dc3545', '#007bff'], 
-            borderWidth: 2,
-            borderColor: '#ffffff'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { 
-            legend: { 
-              position: 'bottom',
-              labels: { color: '#1a1a1a', boxWidth: 14, font: { size: 12, weight: 'bold' } } 
-            } 
-          }
-        }
-      });
-    }
-
-    function setupResetButton() {
-      const btn = document.getElementById('resetDemoBtn');
-      const token = localStorage.getItem('token');
-
-      if (!token) return;
-
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-        const email = String(payload.email || '').toLowerCase();
-        const role = String(payload.role || '').toLowerCase();
-        const isAdmin = role === 'admin' || email === 'admin@sportzwell.com' || Number(payload.id) === 1;
-        if (isAdmin) btn.style.display = 'inline-block';
-      } catch (_) {}
-    }
-
-    async function resetDemoData() {
-      const btn = document.getElementById('resetDemoBtn');
-      btn.disabled = true;
-      btn.innerText = 'Resetting...';
-
-      try {
-        const token = localStorage.getItem('token');
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers.Authorization = `Bearer ${token}`;
-
-        const res = await fetch(RESET_URL, { method: 'POST', headers });
-        const text = await res.text();
-        let data = {};
-        try { data = text ? JSON.parse(text) : {}; } catch (_) {}
-
-        if (!res.ok) {
-          throw new Error(text || `HTTP ${res.status}`);
-        }
-
-        alert(data.message || 'Demo data reset done.');
-        window.location.reload();
-      } catch (e) {
-        setStatus(`Reset failed.\n${e.message}`);
-      } finally {
-        btn.disabled = false;
-        btn.innerText = 'Reset Demo Data (15 Players)';
-      }
-    }
-
-    async function loadDashboard() {
-      try {
-        setupResetButton();
-
-        const [dashboardResp, trendResp] = await Promise.all([
-          getJson(DASHBOARD_URL),
-          getJson(TREND_URL)
-        ]);
-
-        const summary = normalizeSummary(dashboardResp?.data?.summary || {});
-        const trend = normalizeTrend(trendResp?.data?.trend || dashboardResp?.data?.trend || []);
-
-        bindSummary(summary);
-        drawTrend(trend);
-        drawRisk(summary, trend);
-      } catch (err) {
-        setStatus(`Dashboard API failed.\n\n${err.message}\n\nBackend base: ${API_BASE}`);
-      }
-    }
-
-    loadDashboard();
-  </script>
 </body>
 </html>
