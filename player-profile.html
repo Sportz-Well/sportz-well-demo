@@ -34,18 +34,46 @@
       color: #155724;
     }
 
+    .print-header {
+      display: none;
+      text-align: center;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #d4af37;
+      padding-bottom: 10px;
+    }
+    .print-header h1 {
+      font-size: 24pt;
+      color: #003d7a;
+      margin: 0;
+    }
+    .print-header p {
+      font-size: 14pt;
+      color: #555;
+      margin: 5px 0 0;
+    }
+
     @media print {
-      body { background: white !important; color: black !important; }
+      body { 
+        background: white !important; 
+        color: black !important; 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact;
+      }
       header, .buttons, .actions { display: none !important; }
+      .print-header { display: block !important; }
       .container { width: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
       .panel { border: 1px solid #000 !important; box-shadow: none !important; break-inside: avoid; }
       .card { border: 1px solid #eee !important; box-shadow: none !important; }
-      .chart-wrap { height: 250px !important; }
+      .chart-wrap { height: 300px !important; width: 100% !important; }
       .insight-card { border: 2px solid #ccc !important; background: #fafafa !important; }
     }
   </style>
 </head>
 <body>
+  <div class="print-header">
+    <h1>SWPI</h1>
+    <p>Sportz-Well Performance Intelligence</p>
+  </div>
   <header>
     <h1 class="brand">Sportz-Well <span>Performance Intelligence</span></h1>
     <h2 class="title-main">Player Performance Profile</h2>
@@ -89,6 +117,10 @@
           <div id="dobValue" class="value small">--</div>
         </article>
         <article class="card">
+          <div class="label">Age</div>
+          <div id="ageValue" class="value small">--</div>
+        </article>
+        <article class="card">
           <div class="label">Role</div>
           <div id="roleValue" class="value small">--</div>
         </article>
@@ -125,6 +157,7 @@
       statusBox: document.getElementById('statusBox'),
       nameValue: document.getElementById('nameValue'),
       dobValue: document.getElementById('dobValue'),
+      ageValue: document.getElementById('ageValue'),
       roleValue: document.getElementById('roleValue'),
       scoreValue: document.getElementById('scoreValue'),
       riskValue: document.getElementById('riskValue'),
@@ -235,19 +268,32 @@
       }
     }
 
+    function calculateAge(dob) {
+      if (!dob) return null;
+      const birthDate = new Date(dob);
+      if (isNaN(birthDate.getTime())) return null;
+      const diff = Date.now() - birthDate.getTime();
+      const ageDate = new Date(diff);
+      return Math.abs(ageDate.getUTCFullYear() - 1970);
+    }
+
     function renderProfile(player) {
       const insight = generateCoachInsight(player);
 
       ui.nameValue.textContent = player.name || '--';
       ui.dobValue.textContent = formatDob(player.dob || player.date_of_birth || player.dateOfBirth);
+      
+      const dob = player.dob || player.date_of_birth || player.dateOfBirth;
+      ui.ageValue.textContent = calculateAge(dob) || player.age || '--';
+
       ui.roleValue.textContent = player.role || '--';
       ui.scoreValue.textContent = formatScore(player.overall_score || player.latestScore);
       
       // Use score-based signal instead of risk status
       ui.riskValue.innerHTML = `<span class="signal ${insight.signalClass}">${insight.signalText}</span>`;
       
-      ui.stdValue.textContent = player.std || '--';
-      ui.divValue.textContent = player.div || '--';
+      ui.stdValue.textContent = player.std || player.standard || player.Standard || '--';
+      ui.divValue.textContent = player.div || player.division || player.Division || '--';
       ui.schoolIdNoValue.textContent = player.school_id_no || '--';
       ui.aadhaarValue.textContent = player.aadhaar_card_no || '--';
 
@@ -361,8 +407,39 @@
         }
 
         renderProfile(player);
-        const trendRows = await fetchPlayerTrend(player.id);
+        
+        // Prioritize assessments array if available
+        let trendRows = [];
+        if (Array.isArray(player.assessments) && player.assessments.length > 0) {
+           trendRows = player.assessments.map(a => {
+             const p = Number(a.physical_score || 0);
+             const s = Number(a.skill_score || 0);
+             const m = Number(a.mental_score || 0);
+             const c = Number(a.coach_score || a.tactical_score || 0);
+             let overall = a.overall_score || a.overallScore;
+             
+             if (overall === undefined || overall === null) {
+               // Default weighted calculation if missing
+               if (p || s || m || c) {
+                  overall = (p * 0.3) + (s * 0.3) + (m * 0.2) + (c * 0.2);
+               }
+             }
+
+             return {
+               quarterlyCycle: a.quarterly_cycle || a.quarter || 'Unknown',
+               overallScore: overall
+             };
+           });
+           
+           // Sort by quarter
+           trendRows.sort((a, b) => a.quarterlyCycle.localeCompare(b.quarterlyCycle));
+
+        } else {
+           trendRows = await fetchPlayerTrend(player.id);
+        }
+        
         renderTrendChart(trendRows);
+
       } catch (error) {
         showStatus(`Unable to load player profile.\nStatus: ${error.status || '--'}\nMessage: ${error.message}`);
       }

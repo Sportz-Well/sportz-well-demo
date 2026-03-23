@@ -353,6 +353,15 @@
       return { label: 'Stable', className: 'warn' };
     }
 
+    function calculateAge(dob) {
+      if (!dob) return null;
+      const birthDate = new Date(dob);
+      if (isNaN(birthDate.getTime())) return null;
+      const diff = Date.now() - birthDate.getTime();
+      const ageDate = new Date(diff);
+      return Math.abs(ageDate.getUTCFullYear() - 1970);
+    }
+
     function renderSummary(players) {
       const girls = players.filter((p) => p.gender === 'Female').length;
       const boys = players.filter((p) => p.gender === 'Male').length;
@@ -374,15 +383,16 @@
         .map((player) => {
           const signal = getSignal(player);
           const safeId = encodeURIComponent(player.id || '');
-          const std = player.std || '--';
-          const div = player.div || '--';
+          const std = player.std || player.standard || player.Standard || '--';
+          const div = player.div || player.division || player.Division || '--';
+          const age = player.age || calculateAge(player.dob || player.date_of_birth || player.dateOfBirth) || '--';
           const schoolIdNo = player.school_id_no || '--';
           const aadhaarNo = player.aadhaar_card_no || '--';
           const playerNameLink = `<a href="#" onclick="event.preventDefault(); loadPlayerTrend('${safeId}', '${player.name}');" style="cursor: pointer; color: #d4af37; text-decoration: none;">${player.name}</a>`;
           return `
             <tr>
               <td>${playerNameLink}</td>
-              <td>${player.age ?? '--'}</td>
+              <td>${age}</td>
               <td>${std}</td>
               <td>${div}</td>
               <td>${schoolIdNo}</td>
