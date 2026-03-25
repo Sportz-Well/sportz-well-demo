@@ -8,7 +8,7 @@
     atRisk: document.getElementById('atRisk'),
     avgImprove: document.getElementById('avgImprove'),
     playerCount: document.getElementById('playerCount'),
-    totalPlayers: document.getElementById('totalPlayers'), // Added safety catch
+    totalPlayers: document.getElementById('totalPlayers'), 
     coachInsight: document.getElementById('coachInsight'),
     lastUpdated: document.getElementById('lastUpdated'),
     statusBox: document.getElementById('statusBox'),
@@ -41,19 +41,28 @@
     return num.toFixed(1) + suffix;
   }
 
-  function formatPlayer(player) {
+  function formatPlayer(player, isImprover = false) {
     if (!player) return '--';
-    const score = player.overallScore || player.overall_score || player.avg_score || player.improvementPct || player.improvement_pct;
-    return `${player.name || 'Unknown'} (${formatValue(score)})`;
+    let valToShow = 0;
+    if (isImprover) {
+        valToShow = player.improvementPct || player.improvement_pct || player.improvement || 0;
+        return `${player.name || 'Unknown'} (+${formatValue(valToShow, '%')})`;
+    } else {
+        valToShow = player.overallScore || player.overall_score || player.avg_score || player.score || player.latestScore || 0;
+        return `${player.name || 'Unknown'} (${formatValue(valToShow)})`;
+    }
   }
 
   function initTrendChart(data) {
     if (!Array.isArray(data)) data = [];
     if (charts.trend) charts.trend.destroy();
     
-    // EXACT MATCH for your Trend API Raw log
-    const labels = data.length > 0 ? data.map(item => item.quarter || item.quarterlyCycle || item.quarterly_cycle || 'Q') : ['No Data'];
-    const values = data.length > 0 ? data.map(item => Number(item.avg_score || item.averageOverallScore || item.average_overall_score || item.overall_score || 0)) : [null];
+    // SMART LABELS: If backend drops the name, force sequential quarters
+    const labels = data.length > 0 ? data.map((item, index) => {
+        return item.quarter || item.quarterlyCycle || item.quarterly_cycle || item.cycle || item.name || `Q${index + 1} 2026`;
+    }) : ['No Data'];
+    
+    const values = data.length > 0 ? data.map(item => Number(item.avg_score || item.averageOverallScore || item.average_overall_score || item.overall_score || item.score || 0)) : [null];
 
     const ctx = ui.trendCanvas.getContext('2d');
     charts.trend = new Chart(ctx, {
@@ -125,9 +134,11 @@
     }
 
     try {
-      const [summaryData, trendData] = await Promise.all([
-        SWPI.fetchDashboard(),
-        SWPI.fetchTrend()
+      // Fetch players list so frontend can calculate missing stats
+      const [summaryData, trendData, playersData] = await Promise.all([
+        SWPI.fetchDashboard().catch(() => ({})),
+        SWPI.fetchTrend().catch(() => []),
+        SWPI.fetchPlayers().catch(() => [])
       ]);
 
       let summary = summaryData;
@@ -140,12 +151,35 @@
       else if (trendData && trendData.data && Array.isArray(trendData.data.trend)) trend = trendData.data.trend;
       else if (trendData && Array.isArray(trendData.trend)) trend = trendData.trend;
 
-      // ---------------------------------------------------------
-      // EXACT DICTIONARY MATCH based on your screenshot
-      // {success: true, total_players: 15, avg_score: 67, at_risk: 4}
-      // ---------------------------------------------------------
+      let players = [];
+      if (Array.isArray(playersData)) players = playersData;
+      else if (playersData && Array.isArray(playersData.data)) players = playersData.data;
 
-      const latestScore = summary.avg_score || summary.latestScore || 0;
+      // ---------------------------------------------------------
+      // CALCULATE MISSING STATS (Frontend Override)
+      // ---------------------------------------------------------
+      let calcTopPerformer = null;
+      let calcTopImprover = null;
+
+      if (players.length > 0) {
+          // Find Top Performer
+          const sortedByScore = [...players].sort((a, b) => {
+              const sA = Number(a.overall_score || a.latestScore || a.overallScore || 0);
+              const sB = Number(b.overall_score || b.latestScore || b.overallScore || 0);
+              return sB - sA; 
+          });
+          calcTopPerformer = sortedByScore[0];
+
+          // Find Top Improver
+          const sortedByImp = [...players].sort((a, b) => {
+              const iA = Number(a.improvement_pct || a.improvementPct || a.improvement || 0);
+              const iB = Number(b.improvement_pct || b.improvementPct || b.improvement || 0);
+              return iB - iA;
+          });
+          calcTopImprover = sortedByImp[0];
+      }
+
+      const latestScore = summary.avg_score || summary.latestScore || summary.averageScore || 0;
       if(ui.latestScore) ui.latestScore.innerText = formatValue(latestScore);
 
       const growth = summary.quarterGrowthPct || summary.quarter_growth_pct || summary.growth || 0;
@@ -154,10 +188,14 @@
           ui.quarterGrowth.style.color = growth >= 0 ? '#5be3a8' : '#ff6b6b';
       }
 
-      if(ui.latestQuarter) ui.latestQuarter.innerText = summary.latestQuarterlyCycle || summary.quarter || 'Q3 2026';
+      if(ui.latestQuarter) ui.latestQuarter.innerText = summary.latestQuarterlyCycle || summary.quarter || 'Q1 2026';
       
-      if(ui.topPerformer) ui.topPerformer.innerText = formatPlayer(summary.topPerformer || summary.top_performer);
-      if(ui.topImprover) ui.topImprover.innerText = formatPlayer(summary.topImprover || summary.top_improver);
+      // Use the calculated fallback if backend leaves it blank
+      const topPerformer = summary.topPerformer || summary.top_performer || calcTopPerformer;
+      const topImprover = summary.topImprover || summary.top_improver || calcTopImprover;
+
+      if(ui.topPerformer) ui.topPerformer.innerText = formatPlayer(topPerformer, false);
+      if(ui.topImprover) ui.topImprover.innerText = formatPlayer(topImprover, true);
 
       const atRisk = summary.at_risk || summary.atRiskPlayers || 0;
       if(ui.atRisk) {
@@ -168,9 +206,9 @@
       const avgImprove = summary.averageImprovementPct || summary.avg_improvement || summary.improvement || 0;
       if(ui.avgImprove) ui.avgImprove.innerText = formatValue(avgImprove, '%');
 
-      const playerCount = summary.total_players || summary.playerCount || 0;
+      const playerCount = summary.total_players || summary.playerCount || players.length || 0;
       if(ui.playerCount) ui.playerCount.innerText = playerCount;
-      if(ui.totalPlayers) ui.totalPlayers.innerText = playerCount; // Safety catch
+      if(ui.totalPlayers) ui.totalPlayers.innerText = playerCount; 
 
       // Update Insight
       if(ui.coachInsight) {
