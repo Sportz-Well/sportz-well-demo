@@ -48,8 +48,8 @@
     if (!Array.isArray(data)) return;
     if (charts.trend) charts.trend.destroy();
     
-    const labels = data.map(item => item.quarterlyCycle || item.quarter);
-    const values = data.map(item => item.averageOverallScore || item.overall_score);
+    const labels = data.length > 0 ? data.map(item => item.quarterlyCycle || item.quarter) : ['No Data'];
+    const values = data.length > 0 ? data.map(item => item.averageOverallScore || item.overall_score) : [null];
 
     charts.trend = new Chart(ui.trendCanvas, {
       type: 'line',
