@@ -6,36 +6,43 @@
   <title>Sportz-Well | Player Profile</title>
   <link rel="stylesheet" href="styles.css">
   <style>
+      /* 1. Force all data text and labels to pure white */
+    body, .card, .card .label, .card .value, p, span, h1, h2, h3, h4, h5, h6, div {
+        color: #ffffff !important;
+    }
+
+    /* 2. Fix the Coach Insight Box to a readable red/yellow/green based on class */
     .insight-card {
-      padding: 16px;
-      border: 2px solid #ccc;
-      border-radius: 4px;
-      font-size: 15px;
-      line-height: 1.6;
-      font-weight: 500;
-      transition: all 0.3s ease;
+      padding: 16px !important;
+      border-radius: 4px !important;
+      font-size: 15px !important;
+      line-height: 1.6 !important;
+      font-weight: bold !important;
+      transition: all 0.3s ease !important;
     }
 
-    .insight-card.insight-critical {
-      background: rgba(220, 53, 69, 0.1);
-      border-color: #dc3545;
-      color: #ff6b6b;
+    .insight-critical {
+      background: rgba(220, 53, 69, 0.1) !important;
+      border: 2px solid #dc3545 !important;
+      color: #ff6b6b !important;
     }
 
-    .insight-card.insight-stable {
-      background: rgba(255, 193, 7, 0.1);
-      border-color: #ffc107;
-      color: #ffc107;
+    .insight-stable {
+      background: rgba(255, 193, 7, 0.1) !important;
+      border: 2px solid #ffc107 !important;
+      color: #ffc107 !important;
     }
 
-    .insight-card.insight-excellent {
-      background: rgba(40, 167, 69, 0.1);
-      border-color: #28a745;
-      color: #5be3a8;
+    .insight-excellent {
+      background: rgba(40, 167, 69, 0.1) !important;
+      border: 2px solid #28a745 !important;
+      color: #5be3a8 !important;
     }
 
-    .card .value.small {
-      color: #ffffff !important;
+    /* 3. Protect the Yellow Buttons so they stay readable */
+    .btn, .buttons button {
+        color: #000000 !important;
+        font-weight: bold !important;
     }
 
     .print-header {
@@ -377,6 +384,7 @@
           }
         }
       });
+      trendChartRef.update();
     }
 
     async function getPlayerWithFallback(playerId) {

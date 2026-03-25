@@ -48,8 +48,8 @@
     if (!Array.isArray(data)) return;
     if (charts.trend) charts.trend.destroy();
     
-    const labels = data.length > 0 ? data.map(item => item.quarterlyCycle || item.quarter) : ['No Data'];
-    const values = data.length > 0 ? data.map(item => item.averageOverallScore || item.overall_score) : [null];
+    const labels = data.length > 0 ? data.map(item => item.quarterlyCycle || item.quarter || item.quarterly_cycle || 'Unknown') : ['No Data'];
+    const values = data.length > 0 ? data.map(item => item.averageOverallScore || item.overall_score || item.average_overall_score || 0) : [null];
 
     charts.trend = new Chart(ui.trendCanvas, {
       type: 'line',
@@ -76,17 +76,22 @@
         }
       }
     });
+    charts.trend.update();
   }
 
   function initRiskChart(atRiskCount, totalCount) {
     if (charts.risk) charts.risk.destroy();
+
+    const atRisk = Number(atRiskCount) || 0;
+    const total = Number(totalCount) || 0;
+    const onTrack = Math.max(0, total - atRisk);
 
     charts.risk = new Chart(ui.riskCanvas, {
       type: 'doughnut',
       data: {
         labels: ['At Risk', 'On Track'],
         datasets: [{
-          data: [atRiskCount, totalCount - atRiskCount],
+          data: [atRisk, onTrack],
           backgroundColor: ['#ff6b6b', '#5be3a8'],
           borderWidth: 0
         }]
@@ -100,6 +105,7 @@
         cutout: '70%'
       }
     });
+    charts.risk.update();
   }
 
   async function loadDashboard() {
@@ -114,25 +120,41 @@
         SWPI.fetchTrend()
       ]);
 
-      const summary = summaryData.data?.summary || summaryData || {};
-      const trend = trendData.data?.trend || trendData || [];
+      console.log('Dashboard API Response:', summaryData);
+      console.log('Trend API Response:', trendData);
+
+      const summary = summaryData.data?.summary || summaryData.summary || summaryData || {};
+      const trend = trendData.data?.trend || trendData.trend || (Array.isArray(trendData) ? trendData : []);
 
       // Update Cards
-      ui.latestScore.innerText = formatValue(summary.latestScore);
-      ui.quarterGrowth.innerText = (summary.quarterGrowthPct > 0 ? '+' : '') + formatValue(summary.quarterGrowthPct, '%');
-      ui.quarterGrowth.style.color = summary.quarterGrowthPct >= 0 ? '#5be3a8' : '#ff6b6b';
-      ui.latestQuarter.innerText = summary.latestQuarterlyCycle || '--';
-      ui.topPerformer.innerText = formatPlayer(summary.topPerformer);
-      ui.topImprover.innerText = formatPlayer(summary.topImprover);
-      ui.atRisk.innerText = summary.atRiskPlayers || 0;
-      ui.atRisk.style.color = summary.atRiskPlayers > 0 ? '#ff6b6b' : '#5be3a8';
-      ui.avgImprove.innerText = formatValue(summary.averageImprovementPct, '%');
-      ui.playerCount.innerText = summary.playerCount || 0;
+      const latestScore = summary.latestScore || summary.latest_score || 0;
+      ui.latestScore.innerText = formatValue(latestScore);
+
+      const growth = summary.quarterGrowthPct || summary.quarter_growth_pct || summary.quarterGrowth || summary.quarter_growth || 0;
+      ui.quarterGrowth.innerText = (growth > 0 ? '+' : '') + formatValue(growth, '%');
+      ui.quarterGrowth.style.color = growth >= 0 ? '#5be3a8' : '#ff6b6b';
+
+      ui.latestQuarter.innerText = summary.latestQuarterlyCycle || summary.latest_quarterly_cycle || summary.quarter || '--';
+      
+      const topPerformer = summary.topPerformer || summary.top_performer;
+      ui.topPerformer.innerText = formatPlayer(topPerformer);
+
+      const topImprover = summary.topImprover || summary.top_improver;
+      ui.topImprover.innerText = formatPlayer(topImprover);
+
+      const atRisk = summary.atRiskPlayers || summary.at_risk_players || summary.atRiskCount || summary.at_risk_count || 0;
+      ui.atRisk.innerText = atRisk;
+      ui.atRisk.style.color = atRisk > 0 ? '#ff6b6b' : '#5be3a8';
+
+      const avgImprove = summary.averageImprovementPct || summary.average_improvement_pct || summary.avg_improvement || 0;
+      ui.avgImprove.innerText = formatValue(avgImprove, '%');
+
+      const playerCount = summary.playerCount || summary.player_count || 0;
+      ui.playerCount.innerText = playerCount;
 
       // Update Insight
-      const risk = summary.atRiskPlayers || 0;
-      if (risk > 0) {
-        ui.coachInsight.innerText = `${risk} players identified as 'At Risk'. Prioritize skill-focused drills for the U14 squad.`;
+      if (atRisk > 0) {
+        ui.coachInsight.innerText = `${atRisk} players identified as 'At Risk'. Prioritize skill-focused drills for the U14 squad.`;
       } else {
         ui.coachInsight.innerText = `Squad performance is stable. Continue consistent quarterly assessments.`;
       }
@@ -140,7 +162,7 @@
 
       // Initialize Charts
       initTrendChart(trend);
-      initRiskChart(summary.atRiskPlayers || 0, summary.playerCount || 0);
+      initRiskChart(atRisk, playerCount);
 
     } catch (err) {
       console.error(err);
