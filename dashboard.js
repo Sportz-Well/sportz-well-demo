@@ -157,7 +157,9 @@
     try {
       await SWPI.resetDemoData();
       showStatus("Demo data reset successfully!", false);
-      setTimeout(() => location.reload(), 1500);
+      await loadDashboard();
+      ui.resetDemoBtn.disabled = false;
+      ui.resetDemoBtn.innerText = 'Reset Demo Data (15 Players)';
     } catch (err) {
       console.error(err);
       const details = (err.response && err.response.details) ? `\nDetails: ${err.response.details}` : '';
