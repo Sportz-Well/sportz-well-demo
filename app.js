@@ -115,6 +115,16 @@ const SWPI = {
     return await this.requestFirst(paths, { method: "GET" });
   },
 
+  async fetchTrend() {
+    const schoolId = new URLSearchParams(window.location.search).get("schoolId") || "";
+    const suffix = schoolId ? `?schoolId=${encodeURIComponent(schoolId)}` : "";
+    const paths = [
+      `/api/v1/analytics/trend${suffix}`,
+      `/api/analytics/trend${suffix}`
+    ];
+    return await this.requestFirst(paths, { method: "GET" });
+  },
+
   async resetDemoData() {
     return await this.request(`${API_BASE}/api/v1/demo/reset`, { method: "POST" });
   }

@@ -1,72 +1,90 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>SWPI Dashboard</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #0b1f3a;
-      color: white;
-      padding: 20px;
-    }
-    .card {
-      background: #132f57;
-      padding: 20px;
-      margin: 10px;
-      border-radius: 10px;
-      display: inline-block;
-      width: 200px;
-      text-align: center;
-    }
-    h1 {
-      text-align: center;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sportz-Well Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Chart.js for analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
+  <header>
+    <h1 class="brand">Sportz-Well <span>Performance Intelligence</span></h1>
+    <h2 class="title-main">Cricket Academy Dashboard</h2>
+    <p class="title-sub">U14 Squad Performance Dashboard</p>
+  </header>
 
-<h1>SPORTZ-WELL PERFORMANCE INTELLIGENCE</h1>
+  <div class="container">
+    <div id="statusBox" class="status-box" style="display:none;"></div>
 
-<div class="card">
-  <h3>Total Players</h3>
-  <p id="players">--</p>
-</div>
+    <!-- Action Buttons -->
+    <div class="buttons">
+      <button onclick="window.location.href='players.html'">View Players Directory</button>
+      <button onclick="window.location.href='add-player.html'">Add Player</button>
+      <button onclick="window.location.href='assessment-session.html'">Quarterly Assessment</button>
+      <button id="resetDemoBtn" class="secondary">Reset Demo Data (15 Players)</button>
+    </div>
 
-<div class="card">
-  <h3>Avg Score</h3>
-  <p id="avg">--</p>
-</div>
+    <!-- 8-Card Stats Grid -->
+    <div class="cards">
+      <div class="card">
+        <div class="card-title">Latest Score</div>
+        <div class="card-value" id="latestScore">--</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Quarter Growth</div>
+        <div class="card-value" id="quarterGrowth">--</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Latest Quarter</div>
+        <div class="card-value small" id="latestQuarter">--</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Top Performer</div>
+        <div class="card-value small" id="topPerformer">--</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Top Improver</div>
+        <div class="card-value small" id="topImprover">--</div>
+      </div>
+      <div class="card">
+        <div class="card-title">At Risk</div>
+        <div class="card-value" id="atRisk">--</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Avg Improve %</div>
+        <div class="card-value" id="avgImprove">--</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Player Count</div>
+        <div class="card-value" id="playerCount">--</div>
+      </div>
+    </div>
 
-<div class="card">
-  <h3>Latest Score</h3>
-  <p id="latest">--</p>
-</div>
+    <!-- Coach Insight -->
+    <div class="insight-title">Coach Insight</div>
+    <div id="coachInsight" class="insight-card">Loading intelligence...</div>
+    <p id="lastUpdated">Last updated: --</p>
 
-<div class="card">
-  <h3>At Risk</h3>
-  <p id="risk">--</p>
-</div>
+    <!-- Charts Grid -->
+    <div class="charts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px;">
+      <div class="panel">
+        <h3>School Trend (Average Overall Score)</h3>
+        <div class="chart-wrap" style="height: 300px;">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Risk Distribution</h3>
+        <div class="chart-wrap" style="height: 300px;">
+          <canvas id="riskChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<script>
-async function loadDashboard() {
-  try {
-    const res = await fetch('https://sportz-well-backend.onrender.com/api/v1/analytics/dashboard');
-    const data = await res.json();
-
-    document.getElementById('players').innerText = data.total_players;
-    document.getElementById('avg').innerText = data.avg_score;
-    document.getElementById('latest').innerText = data.latest_score;
-    document.getElementById('risk').innerText = data.at_risk;
-
-  } catch (err) {
-    console.error(err);
-    alert("Dashboard failed to load");
-  }
-}
-
-loadDashboard();
-</script>
-
+  <script src="app.js"></script>
+  <script src="dashboard.js"></script>
 </body>
 </html>
