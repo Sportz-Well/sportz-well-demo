@@ -255,5 +255,16 @@
       });
   }
 
+// --- UI CLEANUP: Hide irrelevant 0.0 metrics for the MVP Demo ---
+  if (ui.topImprover && ui.topImprover.parentElement) {
+      ui.topImprover.parentElement.style.display = 'none';
+  }
+  if (ui.avgImprove && ui.avgImprove.parentElement) {
+      ui.avgImprove.parentElement.style.display = 'none';
+  }
+  if (ui.quarterGrowth && ui.quarterGrowth.parentElement) {
+      ui.quarterGrowth.parentElement.style.display = 'none';
+  }
+
   loadDashboard();
 })();
