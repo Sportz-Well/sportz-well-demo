@@ -45,6 +45,7 @@
   }
 
   function initTrendChart(data) {
+    if (!Array.isArray(data)) return;
     if (charts.trend) charts.trend.destroy();
     
     const labels = data.map(item => item.quarterlyCycle || item.quarter);
@@ -159,7 +160,8 @@
       setTimeout(() => location.reload(), 1500);
     } catch (err) {
       console.error(err);
-      showStatus("Reset failed: " + err.message);
+      const details = (err.response && err.response.details) ? `\nDetails: ${err.response.details}` : '';
+      showStatus("Reset failed: " + err.message + details);
       ui.resetDemoBtn.disabled = false;
       ui.resetDemoBtn.innerText = 'Reset Demo Data (15 Players)';
     }
